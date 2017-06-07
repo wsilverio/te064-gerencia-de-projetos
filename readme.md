@@ -1,5 +1,8 @@
 #### Programa para cálculo de caminho crítico
 
+**Especificações**
+- [Especificações](./especificacoes.md)
+
 **Requisitos**
 - CMake 2.8 ou posterior
 - g\+\+ ou clang\+\+
