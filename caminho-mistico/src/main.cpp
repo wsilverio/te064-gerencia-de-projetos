@@ -51,7 +51,7 @@ void printCaminho(const std::vector<std::string> &caminho) {
 /// Exibe os caminhos
 /// @param caminhos caminhos a serem exibidos
 void printCaminhos(const std::vector<std::vector<std::string>> &caminhos) {
-    std::cout << "\n--------------\n";
+    std::cout << "--------------\n";
 
     for (int i = 0; i < caminhos.size(); ++i) {
         std::cout << "[" << i << "] ";
@@ -64,7 +64,7 @@ void printCaminhos(const std::vector<std::vector<std::string>> &caminhos) {
 /// Remove indices vazios
 /// @param vetor vetor a ser analizado
 void removeVazios(std::vector<std::vector<std::string>> &vetor) {
-    for (int j = vetor.size() - 1; j >= 0; --j) {
+    for (long j = vetor.size() - 1; j >= 0; --j) {
         if (vetor.at(j).empty()) {
             vetor.erase(vetor.begin() + j);
         }
@@ -90,8 +90,8 @@ void removeIndices(std::vector<std::vector<std::string>> &vetor,
 /// @param indices mapa com os indices a serem removidos
 void removeDuplicados(std::vector<std::vector<std::string>> &vetor) {
 
-    for (int i = 0; i < vetor.size(); ++i) {
-        for (int j = 0; j < vetor.size(); ++j) {
+    for (auto i = 0; i < vetor.size(); ++i) {
+        for (auto j = 0; j < vetor.size(); ++j) {
             if (i == j) continue;
             if (vetor[i].empty()) continue;
             if (vetor[j].empty()) continue;
@@ -364,7 +364,12 @@ void parseCaminho(std::vector<std::vector<std::string>> &caminhos,
             cam.clear();
         }
     }
+
     removeVazios(caminhos);
+
+    // Caso haja duplicacao de
+    // um no no arquivo
+    removeDuplicados(caminhos);
 
 }
 
@@ -410,6 +415,8 @@ int main(int argc, const char *argv[]) {
         return 1;
     }
 
+    printMistico("\n");
+
     // Testa o arquivo
     testFile(argv[1]);
 
@@ -422,7 +429,7 @@ int main(int argc, const char *argv[]) {
 
 #ifdef DEBUG
     // Imprime o cabecalho
-    printMistico("--------------\nCabecalho:\n");
+    printMistico("CABECALHO\n--------------");
     for (const auto &atv : atividades) {
         printMistico(atv.first << ": " << atv.second);
     }
@@ -437,7 +444,7 @@ int main(int argc, const char *argv[]) {
 
 #ifdef DEBUG
     // Imprime as ligacoes
-    //printMistico("PARES");
+    printMistico("PARES");
     printCaminhos(pares);
 #endif
 
@@ -450,7 +457,7 @@ int main(int argc, const char *argv[]) {
     parseCaminho(caminhos, pares, atividades);
 
     // Imprime os caminhos
-    //printMistico("CAMINHOS");
+    printMistico("CAMINHOS");
     printCaminhos(caminhos);
 
     // Converte std::vector<std::pair> para std::map
@@ -469,18 +476,23 @@ int main(int argc, const char *argv[]) {
     // Calcula caminho(s) critico(s)
     auto max = findCriticals(criticos, caminhos, atvMap);
 
+    printMistico("CRITICOS\n--------------");
+    std::cout << "Caminho(s) critico(s): duracao(" << max << ")\n";
+
     // Exibe o(s) caminho(s) critico(s)
     for (const auto &index : criticos) {
-        std::cout << "Caminho critico = " << max << ":\n\t";
+        std::cout << "\t[" << index << "]: ";
+
         for (int j = 0; j < caminhos[index].size(); ++j) {
-            if (0 != j) {
-                std::cout << " - ";
-            }
+            if (0 != j) std::cout << " - ";
             auto peso = atvMap[caminhos[index][j]];
-            std::cout << caminhos[index][j] << "(" << peso << ")";
+            std::cout << caminhos[index][j] << '(' << peso << ')';
         }
-        std::cout << "\n";
+
+        std::cout << '\n';
+
     }
+    printMistico("--------------\n");
 
     return 0;
 }
