@@ -64,10 +64,9 @@ void printCaminhos(const std::vector<std::vector<std::string>> &caminhos) {
 /// Remove indices vazios
 /// @param vetor vetor a ser analizado
 void removeVazios(std::vector<std::vector<std::string>> &vetor) {
-    for (int j = 0; j < vetor.size(); ++j) {
+    for (int j = vetor.size() - 1; j >= 0; --j) {
         if (vetor.at(j).empty()) {
             vetor.erase(vetor.begin() + j);
-            j--; // nao incrementa
         }
     }
 }
@@ -89,13 +88,13 @@ void removeIndices(std::vector<std::vector<std::string>> &vetor,
 /// Remove vetores duplicados
 /// @param vetor vetor a ser analizado
 /// @param indices mapa com os indices a serem removidos
-void removeDuplicados(std::vector<std::vector<std::string>> &vetor){
+void removeDuplicados(std::vector<std::vector<std::string>> &vetor) {
 
     for (int i = 0; i < vetor.size(); ++i) {
         for (int j = 0; j < vetor.size(); ++j) {
-            if(i == j) continue;
-            if(vetor[i].empty()) continue;
-            if(vetor[j].empty()) continue;
+            if (i == j) continue;
+            if (vetor[i].empty()) continue;
+            if (vetor[j].empty()) continue;
 
             if (std::equal(vetor[i].begin(), vetor[i].end(), vetor[j].begin())) {
                 vetor[j].clear();
@@ -318,6 +317,7 @@ void parseCaminho(std::vector<std::vector<std::string>> &caminhos,
                   std::vector<std::vector<std::string>> &pairs,
                   std::vector<std::pair<std::string, int>> &atv) {
 
+
     // Encontra os nomes das atividades "inicio" e "fim" (ou seus equivalentes)
     std::string inicio, fim;
     for (const auto &a : atv) {
@@ -341,95 +341,30 @@ void parseCaminho(std::vector<std::vector<std::string>> &caminhos,
         }
     }
 
-    if (toRemove.empty()) { // ?
-        erroMistico("sem inicio");
-    }
-
     removeIndices(pairs, toRemove);
-
     toRemove.clear();
 
-    // Cria os caminhos par por par
-    while (pairs.size()) {
-
-        int adicionados = 0;
-
-        for (int index = 0; index < caminhos.size() - adicionados; ++index) {
-
-            if (pairs.front().front() == caminhos[index].back()) {
-                caminhos.push_back(caminhos[index]); // duplica o caminho
-                caminhos.back().push_back(pairs.front().back()); // adiciona ao final
-                toRemove.insert(std::make_pair(index, true)); // sinaliza delecao
-                adicionados++;
+    // Percorre caminho por caminho verificando
+    // se ha a necessidade de adicicao de um novo destino
+    // Se houver, DUPLICA este caminho e adiciona o destino
+    for (auto index = 0; index < caminhos.size(); ++index) {
+        for (const auto &par : pairs) {
+            if (caminhos[index].back() == par.front()) {
+                auto aux = caminhos[index];
+                aux.push_back(par.back());
+                caminhos.push_back(aux);
             }
-
         }
-        pairs.erase(pairs.begin()); // remove a conexao atual
     }
 
-    // Remove os caminhos que foram duplicados
-    removeIndices(caminhos, toRemove);
-
-//#ifdef DEBUG
-    // Teste de falha
-    //caminhos.insert(caminhos.begin()+1,{"Atividade6","Atividade7","Atividade12","Atividade14"});
-//#endif
-
-    // Correcao de arquivo mal feito
-    // ou seja, caso as conexoes nao tenham
-    // sido feitas em ordem crescente
-    bool semFim = false;
-
-    do {
-        for (int ruim = 0; ruim < caminhos.size(); ++ruim) {
-            if (caminhos[ruim].front() != inicio) {
-#ifdef DEBUG
-                printMistico("CAMINHO MAL ELABORADO");
-                printCaminho(caminhos[ruim]);
-                printMistico("\n");
-#endif
-                for (int bom = 0; bom < caminhos.size(); ++bom) {
-                    if (ruim == bom) continue;
-
-                    auto it = std::find(caminhos[bom].begin(), caminhos[bom].end(), caminhos[ruim].front());
-
-                    if (it != caminhos[bom].end() && caminhos[bom].front() == inicio) {
-                        caminhos[ruim].insert(caminhos[ruim].begin(), caminhos[bom].begin(), it);
-                        break;
-                    }
-
-                }
-            }
-
-            if (caminhos[ruim].back() != fim) {
-#ifdef DEBUG
-                printMistico("CAMINHO MAL ELABORADO");
-                printCaminho(caminhos[ruim]);
-                printMistico("\n");
-#endif
-                for (int bom = 0; bom < caminhos.size(); ++bom) {
-                    if (ruim == bom) continue;
-
-                    auto it = std::find(caminhos[bom].begin(), caminhos[bom].end(), caminhos[ruim].back());
-
-                    if (it != caminhos[bom].end() && caminhos[bom].back() == fim) {
-                        caminhos[ruim].insert(caminhos[ruim].end(), it + 1, caminhos[bom].end());
-                        break;
-                    }
-
-                }
-            }
+    // Remove os caminhos que foram duplicados e que
+    // estao sem inicio ou fim
+    for (auto &cam : caminhos) {
+        if (cam.front() != inicio || cam.back() != fim) {
+            cam.clear();
         }
-
-        for (const auto &cam : caminhos) {
-            if (cam.front() != inicio || cam.back() != fim) {
-                semFim = true;
-            }
-        }
-
-    } while (semFim);
-
-    removeDuplicados(caminhos);
+    }
+    removeVazios(caminhos);
 
 }
 
