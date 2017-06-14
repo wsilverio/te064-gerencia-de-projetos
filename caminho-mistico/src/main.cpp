@@ -8,6 +8,7 @@
 ///
 /// Todo:
 ///     - Segunda parte (projeto final)
+///     - Conversor arquivos Unix <-> Windows
 ///
 
 #include <sys/stat.h>   // S_ISREG, stat
@@ -19,6 +20,11 @@
 #include <string>       // strings
 
 // Windows 32 compatibility 
+#ifdef _WIN32
+#include <stdio.h>
+#include <tchar.h>
+#include <SDKDDKVer.h>
+#endif
 // http://www.linuxquestions.org/questions/programming-9/porting-to-win32-429334/
 #ifndef S_ISDIR
 #define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR)
@@ -27,7 +33,7 @@
 #ifndef S_ISREG
 #define S_ISREG(mode)  (((mode) & S_IFMT) == S_IFREG)
 #endif
-
+  
 // Para modo de compilacao
 // Exibe msgs de debug e teste
 #define DEBUG
@@ -86,7 +92,7 @@ void removeVazios(std::vector<std::vector<std::string>> &vetor) {
 /// @param vetor vetor a ser analizado
 /// @param indices mapa com os indices a serem removidos
 void removeIndices(std::vector<std::vector<std::string>> &vetor,
-                   std::map<int, bool> &indices) {
+    std::map<int, bool> &indices) {
 
     // Remove os caminhos que foram duplicados
     for (const auto &index : indices) {
@@ -148,7 +154,8 @@ void testFile(const std::string &filename) {
                 // Verifica se ha mais de um '#' na linha de demarcacao
                 if (qtde > 1) {
                     erroArquivoMistico(file, "demarcadores \"##\" invalidos");
-                } else {
+                }
+                else {
                     ++cont;
                 }
             }
@@ -156,7 +163,8 @@ void testFile(const std::string &filename) {
         if (cont != 2) {
             erroArquivoMistico(file, "demarcadores \"#\" invalidos");
         }
-    } else {
+    }
+    else {
         erroMistico("nao se pode abrir o arquivo");
     }
 }
@@ -183,8 +191,8 @@ void parseAtv(std::vector<std::pair<std::string, int>> &atv, const std::string &
                 // Verifica se o cabecalho esta antes da segunda demarcacao
                 if ('#' == line[0]) {
                     erroArquivoMistico(file,
-                                       "cabecalho invalido "
-                                               "ou nao encontrado");
+                        "cabecalho invalido "
+                        "ou nao encontrado");
                 }
 
                 std::string abre("{{");
@@ -246,7 +254,8 @@ void parseAtv(std::vector<std::pair<std::string, int>> &atv, const std::string &
         file.close();
 
         return;
-    } else {
+    }
+    else {
         erroMistico("nao se pode abrir o arquivo");
     }
 }
@@ -256,8 +265,8 @@ void parseAtv(std::vector<std::pair<std::string, int>> &atv, const std::string &
 /// @param atv vetor com as atividades
 /// @param filename caminho do arquivo
 void parsePares(std::vector<std::vector<std::string>> &pairs,
-                std::vector<std::pair<std::string, int>> &atv,
-                const std::string &filename) {
+    std::vector<std::pair<std::string, int>> &atv,
+    const std::string &filename) {
 
     std::ifstream file(filename);
 
@@ -299,20 +308,22 @@ void parsePares(std::vector<std::vector<std::string>> &pairs,
 
                 if (!(fromWasFound)) {
                     erroArquivoMistico(file,
-                                       "\"" << from << "\" "
-                                               "nao especificada no cabecalho");
-                } else if (!(toWasFound)) {
+                        "\"" << from << "\" "
+                        "nao especificada no cabecalho");
+                }
+                else if (!(toWasFound)) {
                     erroArquivoMistico(file,
-                                       "\"" << to << "\" "
-                                               "nao especificada no cabecalho");
+                        "\"" << to << "\" "
+                        "nao especificada no cabecalho");
                 }
 
-                pairs.push_back({from, to});
+                pairs.push_back({ from, to });
             }
 
         } while (!file.eof());
 
-    } else {
+    }
+    else {
         erroMistico("nao se pode abrir o arquivo");
     }
 
@@ -325,8 +336,8 @@ void parsePares(std::vector<std::vector<std::string>> &pairs,
 /// @param pairs conexoes entre as atividades
 /// @param atv mapa com as atividades
 void parseCaminho(std::vector<std::vector<std::string>> &caminhos,
-                  std::vector<std::vector<std::string>> &pairs,
-                  std::vector<std::pair<std::string, int>> &atv) {
+    std::vector<std::vector<std::string>> &pairs,
+    std::vector<std::pair<std::string, int>> &atv) {
 
 
     // Encontra os nomes das atividades "inicio" e "fim" (ou seus equivalentes)
@@ -336,7 +347,8 @@ void parseCaminho(std::vector<std::vector<std::string>> &caminhos,
             if (inicio.empty()) {
                 inicio = a.first;
                 continue;
-            } else {
+            }
+            else {
                 fim = a.first;
                 break;
             }
@@ -390,8 +402,8 @@ void parseCaminho(std::vector<std::vector<std::string>> &caminhos,
 /// @param header cabecalho
 /// @var max peso critico
 int findCriticals(std::vector<int> &critical,
-                  const std::vector<std::vector<std::string>> &path,
-                  std::map<std::string, int> &header) {
+    const std::vector<std::vector<std::string>> &path,
+    std::map<std::string, int> &header) {
     int max = 0;
 
     for (int i = 0; i < path.size(); ++i) {
@@ -406,7 +418,8 @@ int findCriticals(std::vector<int> &critical,
             max = sum;
             critical.clear();
             critical.push_back(i);
-        } else if (sum == max) {
+        }
+        else if (sum == max) {
             critical.push_back(i);
         }
     }
@@ -418,9 +431,9 @@ int main(int argc, const char *argv[]) {
     // Verifica os argumentos do programa
     if (argc != 2) {
         std::string helpMessage =
-                "\nERRO: arquivo invalido. Tente:\n"
-                        "$ " +
-                std::string(argv[0]) + " caminho/do/arquivo.txt\n";
+            "\nERRO: arquivo invalido. Tente:\n"
+            "$ " +
+            std::string(argv[0]) + " caminho/do/arquivo.txt\n";
 
         printMistico(helpMessage);
         return 1;
