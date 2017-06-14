@@ -16,6 +16,17 @@
 #include <iostream>     // cout
 #include <vector>       // vector
 #include <map>          // map
+#include <string>       // strings
+
+// Windows 32 compatibility 
+// http://www.linuxquestions.org/questions/programming-9/porting-to-win32-429334/
+#ifndef S_ISDIR
+#define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR)
+#endif
+
+#ifndef S_ISREG
+#define S_ISREG(mode)  (((mode) & S_IFMT) == S_IFREG)
+#endif
 
 // Para modo de compilacao
 // Exibe msgs de debug e teste
