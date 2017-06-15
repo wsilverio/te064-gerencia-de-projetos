@@ -41,7 +41,7 @@
   erroMistico(msg);
 
 /// Exibe 1 único caminho
-/// @param caminho strings com os nomes dos nos
+/// @param caminho strings com os nomes dos nós
 void printCaminho(const std::vector<std::string> &caminho) {
     for (const auto &nome : caminho) {
         std::cout << nome << " ";
@@ -110,12 +110,12 @@ inline void nextLine(std::ifstream &f, std::string &l) {
     }
 }
 
-/// Testa se o arquivo e valido e verifica demarcadores "#"
+/// Testa se o arquivo é válido e verifica demarcadores "#"
 /// @param  filename caminho do arquivo
 void testFile(const std::string &filename) {
     std::ifstream file(filename);
 
-    // Verifica se e um arquivo regular
+    // Verifica se é um arquivo regular
     struct stat st;
     stat(filename.c_str(), &st);
 
@@ -242,7 +242,7 @@ void parseAtv(std::vector<std::pair<std::string, int>> &atv,
     }
 }
 
-/// Extrai as ligações entre os nos
+/// Extrai as ligações entre os nós
 /// @param pairs conexões entre as atividades
 /// @param atv vetor com as atividades
 /// @param filename caminho do arquivo
@@ -321,7 +321,7 @@ void parsePares(std::vector<std::vector<std::string>> &pairs,
 }
 
 /// Extrai as ligações entre as atividades
-/// @param caminhos conexões extraídos: cada "linha" do vetor e um caminho
+/// @param caminhos conexões extraídos: cada "linha" do vetor é um caminho
 /// @param pairs conexões entre as atividades
 /// @param atv mapa com as atividades
 void parseCaminho(std::vector<std::vector<std::string>> &caminhos,
@@ -449,7 +449,7 @@ int main(int argc, const char *argv[]) {
     // Vetor com as conexões
     std::vector<std::vector<std::string>> pares;
 
-    // Extrai as conexões entre os nos
+    // Extrai as conexões entre os nós
     parsePares(pares, atividades, std::string(argv[1]));
 
 #ifdef DEBUG
