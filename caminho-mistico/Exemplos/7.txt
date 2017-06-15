@@ -1,0 +1,21 @@
+//Modelo 7
+#
+{{inicio,-1},{Atividade1,15},{Atividade2,8},{Atividade3,8},{Atividade4,5},{Atividade5,6},{Atividade6,3},{Atividade7,6},{Atividade8,4},{Atividade9,7},{Atividade10,20},{Atividade11,4},{fim,-1}}
+#
+{inicio,Atividade1}
+{Atividade1,Atividade2}
+{Atividade2,Atividade3}
+{Atividade2,Atividade4}
+{Atividade3,Atividade11}
+{Atividade4,Atividade11}
+{Atividade1,Atividade5}
+{Atividade5,Atividade6}
+{Atividade6,Atividade7}
+{Atividade7,Atividade11}
+{Atividade5,Atividade8}
+{Atividade8,Atividade9}
+{Atividade9,Atividade11}
+{Atividade1,Atividade10}
+{Atividade10,Atividade11}
+{Atividade11,fim}
+#

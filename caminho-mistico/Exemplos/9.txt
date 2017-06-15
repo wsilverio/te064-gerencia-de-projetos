@@ -1,0 +1,25 @@
+//Modelo 9
+#
+{{inicio,-1},{Atividade1,5},{Atividade2,8},{Atividade3,8},{Atividade4,7},{Atividade5,8},{Atividade6,5},{Atividade7,6},{Atividade8,4},{Atividade9,9},{Atividade10,15},{Atividade11,4},{Atividade12,5},{Atividade13,4},{Atividade14,10},{Atividade15,10},{fim,-1}}
+#
+{inicio,Atividade1}
+{Atividade1,Atividade2}
+{Atividade2,Atividade3}
+{Atividade2,Atividade4}
+{Atividade3,Atividade13}
+{Atividade4,Atividade13}
+{Atividade13,Atividade15}
+{Atividade1,Atividade5}
+{Atividade5,Atividade6}
+{Atividade6,Atividade7}
+{Atividade7,Atividade12}
+{Atividade12,Atividade14}
+{Atividade5,Atividade8}
+{Atividade8,Atividade9}
+{Atividade9,Atividade12}
+{Atividade1,Atividade10}
+{Atividade10,Atividade11}
+{Atividade11,Atividade14}
+{Atividade14,Atividade15}
+{Atividade15,fim}
+#

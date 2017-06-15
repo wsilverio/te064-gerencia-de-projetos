@@ -1,0 +1,11 @@
+//Modelo 1
+#
+{{inicio,-1},{Atividade1,3},{Atividade2,4},{Atividade3,7},{Atividade4,6},{fim,-1}}
+#
+{inicio,Atividade1}
+{Atividade1,Atividade2}
+{Atividade1,Atividade3}
+{Atividade2,Atividade4}
+{Atividade3,Atividade4}
+{Atividade4,fim}
+#
