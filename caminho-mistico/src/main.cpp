@@ -18,10 +18,21 @@
 #include <map>         // map
 #include <string>      // strings - implícito
 #include <vector>      // vector
+#include <locale>
 
 // Para modo de compilação
 // Exibe msgs de debug e teste
-//#define DEBUG
+#define DEBUG false
+
+#if defined (_WIN32)
+# ifndef S_ISDIR
+# define S_ISDIR(mode)  (((mode)& S_IFMT) == S_IFDIR)
+# endif
+
+# ifndef S_ISREG
+# define S_ISREG(mode)  (((mode)& S_IFMT) == S_IFREG)
+# endif
+#endif
 
 struct Day {
     int dia;
@@ -35,9 +46,16 @@ struct Day {
 
 /// Escreve uma mensagem no console e fecha o programa (erro)
 /// @param msg mensagem de erro
-#define erroMistico(msg)                    \
-  printMistico("\nERRO: " << msg << ".\n"); \
+#ifdef _WIN32
+# define erroMistico(msg)			\
+  printMistico("\nERRO: " << msg);	\
+  std::cin.get();					\
   exit(EXIT_FAILURE);
+#else
+# define erroMistico(msg)			\
+  printMistico("\nERRO: " << msg);	\
+  exit(EXIT_FAILURE);
+#endif
 
 /// Fecha o arquivo, escreve uma mensagem de erro no console
 /// e fecha o programa (erro)
@@ -48,8 +66,9 @@ struct Day {
   erroMistico(msg);
 
 bool isInteger(const std::string &str) {
+	std::locale loc;
     for (auto digi : str) {
-        if (!std::isdigit(digi)) {
+        if (!std::isdigit(digi, loc)) {
             return false;
         }
     }
@@ -571,12 +590,11 @@ int main(int argc, const char *argv[]) {
     // Verifica os argumentos do programa
     if (argc != 2) {
         std::string helpMessage =
-                "\nERRO: arquivo invalido. Tente:\n"
-                        "$ " +
-                std::string(argv[0]) + " caminho/do/arquivo.txt\n";
+                "arquivo invalido. Tente:\n"
+                        "$ " + std::string(argv[0]) +
+				" caminho/do/arquivo.txt";
 
-        printMistico(helpMessage);
-        return 1;
+        erroMistico(helpMessage);
     }
 
     printMistico("\n");
