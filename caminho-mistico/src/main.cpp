@@ -11,27 +11,27 @@
 ///     - Parser com localização das chaves - permitir comentários no arquivo
 ///
 
-#include <sys/stat.h>  // S_ISREG, stat
-#include <algorithm>   // find, count
-#include <fstream>     // ifstream
-#include <iostream>    // cout
-#include <map>         // map
-#include <string>      // strings - implícito
-#include <vector>      // vector
-#include <locale>
+#include <sys/stat.h>   // S_ISREG, stat
+#include <algorithm>    // find, count
+#include <fstream>      // ifstream
+#include <iostream>     // cout
+#include <map>          // map
+//#include <string>       // strings - implícito
+#include <vector>       // vector
+#include <locale>       // locale
 
 // Para modo de compilação
 // Exibe msgs de debug e teste
-#define DEBUG false
+#define DEBUG true
 
 #if defined (_WIN32)
-# ifndef S_ISDIR
-# define S_ISDIR(mode)  (((mode)& S_IFMT) == S_IFDIR)
-# endif
+#  ifndef S_ISDIR
+#    define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR)
+#  endif
 
-# ifndef S_ISREG
-# define S_ISREG(mode)  (((mode)& S_IFMT) == S_IFREG)
-# endif
+#  ifndef S_ISREG
+#    define S_ISREG(mode)  (((mode) & S_IFMT) == S_IFREG)
+#  endif
 #endif
 
 struct Day {
