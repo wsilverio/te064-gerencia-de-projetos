@@ -7,7 +7,9 @@
 /// Prof. Edson Pacheco
 ///
 /// Todo:
+///     - coooonst
 ///     - Segunda parte (projeto final)
+///         - verificar se as atv constam no cabecalho
 ///
 
 #include <sys/stat.h>  // S_ISREG, stat
@@ -15,12 +17,18 @@
 #include <fstream>     // ifstream
 #include <iostream>    // cout
 #include <map>         // map
-//#include <string>      // strings - implícito
+#include <string>      // strings - implícito
 #include <vector>      // vector
 
 // Para modo de compilação
 // Exibe msgs de debug e teste
-#define DEBUG
+//#define DEBUG
+
+struct Day {
+    int dia;
+    std::vector<std::string> iniciadas;
+    std::vector<std::string> finalizadas;
+};
 
 /// Escreve uma mensagem no console (std::cout)
 /// @param p mensagem
@@ -39,6 +47,15 @@
 #define erroArquivoMistico(f, msg) \
   f.close();                       \
   erroMistico(msg);
+
+bool isInteger(const std::string &str) {
+    for (auto digi : str) {
+        if (!std::isdigit(digi)) {
+            return false;
+        }
+    }
+    return true;
+}
 
 /// Exibe 1 único caminho
 /// @param caminho strings com os nomes dos nós
@@ -70,19 +87,6 @@ void removeVazios(std::vector<std::vector<std::string>> &vetor) {
     }
 }
 
-/// Remove múltiplos indices de um vetor
-/// @param vetor vetor a ser analisado
-/// @param indices mapa com os indices a serem removidos
-void removeIndices(std::vector<std::vector<std::string>> &vetor,
-                   std::map<unsigned long, bool> &indices) {
-    // Remove os caminhos que foram duplicados
-    for (const auto &index : indices) {
-        vetor.at(index.first).clear();
-    }
-
-    removeVazios(vetor);
-}
-
 /// Remove vetores duplicados
 /// @param vetor vetor a ser analisado
 /// @param indices mapa com os indices a serem removidos
@@ -104,9 +108,17 @@ void removeDuplicados(std::vector<std::vector<std::string>> &vetor) {
 /// Chama a próxima linha do arquivo
 /// @param f arquivo
 /// @param l conteúdo extraido
-inline void nextLine(std::ifstream &f, std::string &l) {
+inline void nextLine(std::ifstream &f, std::string &str) {
     if (f.is_open()) {
-        std::getline(f, l);
+        std::getline(f, str);
+
+        // Remove espaços
+        auto it = std::find(str.begin(), str.end(), ' ');
+
+        while (it != str.end()) {
+            str.erase(it);
+            it = std::find(str.begin(), str.end(), ' ');
+        }
     }
 }
 
@@ -156,6 +168,7 @@ void testFile(const std::string &filename) {
 /// @param filename caminho do arquivo
 void parseAtv(std::vector<std::pair<std::string, int>> &atv,
               const std::string &filename) {
+
     std::ifstream file(filename);
 
     if (file.is_open()) {
@@ -271,7 +284,7 @@ void parsePares(std::vector<std::vector<std::string>> &pairs,
                 }
 
                 // Determina a quantidade de virgulas
-                auto qtde = (std::count(line.begin(), line.end(), ','));
+                auto qtde = std::count(line.begin(), line.end(), ',');
 
                 if (1 != qtde) {
                     erroArquivoMistico(file, "codificacao invalida")
@@ -342,18 +355,13 @@ void parseCaminho(std::vector<std::vector<std::string>> &caminhos,
         }
     }
 
-    // Adiciona ao vetor as atividades que começam com "inicio"
-    std::map<unsigned long, bool> toRemove;
-
     for (auto i = 0; i < pairs.size(); ++i) {
         if (pairs[i].front() == inicio) {
-            caminhos.push_back(pairs[i]);
-            toRemove.insert(std::make_pair(i, true));
+            caminhos.push_back(std::move(pairs[i]));
         }
     }
 
-    removeIndices(pairs, toRemove);
-    toRemove.clear();
+    removeVazios(pairs);
 
     // Percorre caminho por caminho verificando
     // se ha a necessidade de adição de um novo destino
@@ -411,6 +419,107 @@ int findCriticals(std::vector<int> &critical,
         }
     }
     return max;
+}
+
+void parseExecucao(std::vector<struct Day> &days,
+                   std::map<std::string, int> &header,
+                   const std::string &filename) {
+
+    std::ifstream file(filename);
+
+    if (file.is_open()) {
+
+        std::string line;
+
+        // Ignora as linhas ate que se encontre a terceira demarcação
+        file.ignore(std::numeric_limits<std::streamsize>::max(), '#');
+        file.ignore(std::numeric_limits<std::streamsize>::max(), '#');
+        file.ignore(std::numeric_limits<std::streamsize>::max(), '#');
+
+        do {
+
+            nextLine(file, line);
+
+            if (line.empty()) {
+                continue;
+            }
+
+            const std::string inicio_str = "i:";
+            // Busca por atividades iniciadas no dia
+            const auto temInicio_it = line.find(inicio_str);
+
+            const std::string final_str = "f:";
+            // Busca por atividades finalizadas no dia
+            const auto temFinal_it = line.find(final_str);
+
+            const bool temInicio = (std::string::npos != temInicio_it);
+            const auto temFinal = (std::string::npos != temFinal_it);
+
+            // Verifica linha válida
+            if (!temInicio && !temFinal) {
+                //erroArquivoMistico(file, "linha \'execucao\' invalida");
+                continue; // pode haver linha em braco
+            }
+
+            // Índice do dia
+            const auto it = line.find_first_of(":{");
+
+            if (it == std::string::npos) {
+                erroArquivoMistico(file, "linha \'execucao\' invalida");
+            }
+
+            // Extrai o índice
+            std::string dia_str = line.substr(0, it);
+
+            if (!isInteger(dia_str)) {
+                erroArquivoMistico(file, "linha \'execucao\' invalida");
+            }
+
+            Day thisDay;
+
+            thisDay.dia = std::stoi(dia_str);
+
+            if (temFinal) {
+                // Extrai as atividades finalizadas
+                auto finalizadas_str = line.substr(temFinal_it + final_str.size());
+                finalizadas_str.pop_back(); // remove '}'
+
+                // Prepara para a extração das atv iniciadas (if: temInicio)
+                line.erase(temFinal_it);
+
+                auto virgulas = std::count(finalizadas_str.begin(), finalizadas_str.end(), ',') + 1;
+
+                // Adiciona atv por atv ao vetor
+                for (auto i = 0; i < virgulas; ++i) {
+                    thisDay.finalizadas.push_back(finalizadas_str.substr(0, finalizadas_str.find(',')));
+                    finalizadas_str.erase(0, finalizadas_str.find(',') + 1);
+                }
+            }
+
+            if (temInicio) {
+                // Extrai as atividades iniciadas
+                auto iniciadas_str = line.substr(temInicio_it + inicio_str.size());
+                iniciadas_str.pop_back(); // remove '}' ou ';'
+
+                auto virgulas = std::count(iniciadas_str.begin(), iniciadas_str.end(), ',') + 1;
+
+                // Adiciona atv por atv ao vetor
+                for (auto i = 0; i < virgulas; ++i) {
+                    thisDay.iniciadas.push_back(iniciadas_str.substr(0, iniciadas_str.find(',')));
+                    iniciadas_str.erase(0, iniciadas_str.find(',') + 1);
+                }
+
+            }
+
+            // Adiciona ao vetor
+            days.push_back(thisDay);
+
+        } while (!file.eof());
+
+    } else {
+        erroMistico("nao se pode abrir o arquivo");
+    }
+
 }
 
 int main(int argc, const char *argv[]) {
@@ -502,6 +611,14 @@ int main(int argc, const char *argv[]) {
         std::cout << '\n';
     }
     printMistico("--------------\n");
+
+    std::vector<struct Day> dias;
+
+    parseExecucao(dias, atvMap, std::string(argv[1]));
+
+    for (const auto &d : dias) {
+        printMistico("Dia [" << d.dia << "]:");
+    }
 
     return 0;
 }
