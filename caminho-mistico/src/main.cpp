@@ -7,9 +7,8 @@
 /// Prof. Edson Pacheco
 ///
 /// Todo:
-///     - coooonst
 ///     - Segunda parte (projeto final)
-///         - verificar se as atv constam no cabecalho
+///     - Parser com localização das chaves - permitir comentários no arquivo
 ///
 
 #include <sys/stat.h>  // S_ISREG, stat
@@ -26,8 +25,8 @@
 
 struct Day {
     int dia;
-    std::vector<std::string> iniciadas;
-    std::vector<std::string> finalizadas;
+    std::vector <std::string> iniciadas;
+    std::vector <std::string> finalizadas;
 };
 
 /// Escreve uma mensagem no console (std::cout)
@@ -59,7 +58,7 @@ bool isInteger(const std::string &str) {
 
 /// Exibe 1 único caminho
 /// @param caminho strings com os nomes dos nós
-void printCaminho(const std::vector<std::string> &caminho) {
+void printCaminho(const std::vector <std::string> &caminho) {
     for (const auto &nome : caminho) {
         std::cout << nome << " ";
     }
@@ -68,7 +67,7 @@ void printCaminho(const std::vector<std::string> &caminho) {
 
 /// Exibe os caminhos
 /// @param caminhos caminhos a serem exibidos
-void printCaminhos(const std::vector<std::vector<std::string>> &caminhos) {
+void printCaminhos(const std::vector <std::vector<std::string>> &caminhos) {
     std::cout << "--------------\n";
     for (int i = 0; i < caminhos.size(); ++i) {
         std::cout << "[" << i << "] ";
@@ -79,7 +78,7 @@ void printCaminhos(const std::vector<std::vector<std::string>> &caminhos) {
 
 /// Remove indices vazios
 /// @param vetor vetor a ser analisado
-void removeVazios(std::vector<std::vector<std::string>> &vetor) {
+void removeVazios(std::vector <std::vector<std::string>> &vetor) {
     for (long j = vetor.size() - 1; j >= 0; --j) {
         if (vetor[j].empty()) {
             vetor.erase(vetor.begin() + j);
@@ -90,7 +89,7 @@ void removeVazios(std::vector<std::vector<std::string>> &vetor) {
 /// Remove vetores duplicados
 /// @param vetor vetor a ser analisado
 /// @param indices mapa com os indices a serem removidos
-void removeDuplicados(std::vector<std::vector<std::string>> &vetor) {
+void removeDuplicados(std::vector <std::vector<std::string>> &vetor) {
     for (auto i = 0; i < vetor.size(); ++i) {
         for (auto j = 0; j < vetor.size(); ++j) {
             if (i == j) continue;
@@ -125,10 +124,12 @@ inline void nextLine(std::ifstream &f, std::string &str) {
 /// Testa se o arquivo é válido e verifica demarcadores "#"
 /// @param  filename caminho do arquivo
 void testFile(const std::string &filename) {
+
     std::ifstream file(filename);
 
     // Verifica se é um arquivo regular
     struct stat st;
+
     stat(filename.c_str(), &st);
 
     if (!S_ISREG(st.st_mode)) {
@@ -166,12 +167,13 @@ void testFile(const std::string &filename) {
 /// Extrai o cabeçalho das atividades
 /// @param atv vetor com as atividades: {nome, peso}
 /// @param filename caminho do arquivo
-void parseAtv(std::vector<std::pair<std::string, int>> &atv,
+void parseAtv(std::vector <std::pair<std::string, int>> &atv,
               const std::string &filename) {
 
     std::ifstream file(filename);
 
     if (file.is_open()) {
+
         std::string line;
 
         while (!file.eof()) {
@@ -259,9 +261,10 @@ void parseAtv(std::vector<std::pair<std::string, int>> &atv,
 /// @param pairs conexões entre as atividades
 /// @param atv vetor com as atividades
 /// @param filename caminho do arquivo
-void parsePares(std::vector<std::vector<std::string>> &pairs,
-                std::vector<std::pair<std::string, int>> &atv,
+void parsePares(std::vector <std::vector<std::string>> &pairs,
+                std::vector <std::pair<std::string, int>> &atv,
                 const std::string &filename) {
+
     std::ifstream file(filename);
 
     if (file.is_open()) {
@@ -284,7 +287,7 @@ void parsePares(std::vector<std::vector<std::string>> &pairs,
                 }
 
                 // Determina a quantidade de virgulas
-                auto qtde = std::count(line.begin(), line.end(), ',');
+                const auto qtde = std::count(line.begin(), line.end(), ',');
 
                 if (1 != qtde) {
                     erroArquivoMistico(file, "codificacao invalida")
@@ -337,9 +340,10 @@ void parsePares(std::vector<std::vector<std::string>> &pairs,
 /// @param caminhos conexões extraídos: cada "linha" do vetor é um caminho
 /// @param pairs conexões entre as atividades
 /// @param atv mapa com as atividades
-void parseCaminho(std::vector<std::vector<std::string>> &caminhos,
-                  std::vector<std::vector<std::string>> &pairs,
-                  std::vector<std::pair<std::string, int>> &atv) {
+void parseCaminho(std::vector <std::vector<std::string>> &caminhos,
+                  std::vector <std::vector<std::string>> &pairs,
+                  std::vector <std::pair<std::string, int>> &atv) {
+
     // Encontra os nomes das atividades "inicio" e "fim" (ou seus equivalentes)
     std::string inicio, fim;
 
@@ -397,8 +401,9 @@ void parseCaminho(std::vector<std::vector<std::string>> &caminhos,
 /// @param header cabeçalho
 /// @var max peso critico
 int findCriticals(std::vector<int> &critical,
-                  const std::vector<std::vector<std::string>> &path,
+                  const std::vector <std::vector<std::string>> &path,
                   std::map<std::string, int> &header) {
+
     int max = 0;
 
     for (int i = 0; i < path.size(); ++i) {
@@ -487,7 +492,7 @@ void parseExecucao(std::vector<struct Day> &days,
                 // Prepara para a extração das atv iniciadas (if: temInicio)
                 line.erase(temFinal_it);
 
-                auto virgulas = std::count(finalizadas_str.begin(), finalizadas_str.end(), ',') + 1;
+                const auto virgulas = std::count(finalizadas_str.begin(), finalizadas_str.end(), ',') + 1;
 
                 // Adiciona atv por atv ao vetor
                 for (auto i = 0; i < virgulas; ++i) {
@@ -501,7 +506,7 @@ void parseExecucao(std::vector<struct Day> &days,
                 auto iniciadas_str = line.substr(temInicio_it + inicio_str.size());
                 iniciadas_str.pop_back(); // remove '}' ou ';'
 
-                auto virgulas = std::count(iniciadas_str.begin(), iniciadas_str.end(), ',') + 1;
+                const auto virgulas = std::count(iniciadas_str.begin(), iniciadas_str.end(), ',') + 1;
 
                 // Adiciona atv por atv ao vetor
                 for (auto i = 0; i < virgulas; ++i) {
@@ -509,6 +514,45 @@ void parseExecucao(std::vector<struct Day> &days,
                     iniciadas_str.erase(0, iniciadas_str.find(',') + 1);
                 }
 
+            }
+
+            // Verifica se as atividades iniciadas constam no cabeçalho
+            if (!thisDay.iniciadas.empty()) {
+
+                for (auto const &ini : thisDay.iniciadas) {
+                    bool atvWasFound = false;
+
+                    for (const auto &atv : header) {
+                        if (ini == atv.first) {
+                            atvWasFound = true;
+                            break;
+                        }
+                    }
+
+                    if (!atvWasFound) {
+                        erroArquivoMistico(file, "atividade \"" << ini << "\" nao especificada no cabecalho");
+                    }
+                }
+            }
+
+
+            // Verifica se as atividades finalizadas constam no cabeçalho
+            if (!thisDay.finalizadas.empty()) {
+
+                for (auto const &fin : thisDay.finalizadas) {
+                    bool atvWasFound = false;
+
+                    for (const auto &atv : header) {
+                        if (fin == atv.first) {
+                            atvWasFound = true;
+                            break;
+                        }
+                    }
+
+                    if (!atvWasFound) {
+                        erroArquivoMistico(file, "atividade \"" << fin << "\" nao especificada no cabecalho");
+                    }
+                }
             }
 
             // Adiciona ao vetor
@@ -523,6 +567,7 @@ void parseExecucao(std::vector<struct Day> &days,
 }
 
 int main(int argc, const char *argv[]) {
+
     // Verifica os argumentos do programa
     if (argc != 2) {
         std::string helpMessage =
@@ -541,43 +586,30 @@ int main(int argc, const char *argv[]) {
 
     /// Vetor das atividades (cabeçalho)
     /// Formato de armazenamento: {{"nome", peso}, ...}
-    std::vector<std::pair<std::string, int>> atividades;
+    std::vector <std::pair<std::string, int>> atividades;
 
-    // Extrai o cabeçalho a partir do arquivo
-    parseAtv(atividades, std::string(argv[1]));
-
-#ifdef DEBUG
-    // Imprime o cabeçalho
-    printMistico("CABECALHO\n--------------");
-    for (const auto &atv : atividades) {
-        printMistico(atv.first << ": " << atv.second);
-    }
-    printMistico("--------------\n");
-#endif
-
-    // Vetor com as conexões
-    std::vector<std::vector<std::string>> pares;
-
-    // Extrai as conexões entre os nós
-    parsePares(pares, atividades, std::string(argv[1]));
-
-#ifdef DEBUG
-    // Imprime as ligações
-    printMistico("PARES");
-    printCaminhos(pares);
-#endif
+    /// Vetor com as conexões
+    /// Formato de armazenamento: {{"from", "to"}, ...}
+    std::vector <std::vector<std::string>> pares;
 
     /// Vetor dos caminhos
     /// Formato de armazenamento:
     ///     {{"inicio","atvA","atvB","atvC",...,"fim"}, ...}
-    std::vector<std::vector<std::string>> caminhos;
+    std::vector <std::vector<std::string>> caminhos;
 
+    /// Vetor da execução dos dias
+    /// Formato de armazenamento:
+    /// dia: dia
+    /// iniciadas {atvA, AtvB, ...}
+    /// finalizadas {atvC, AtvD, ...}
+    std::vector<struct Day> dias;
+
+    // Extrai o cabeçalho a partir do arquivo
+    parseAtv(atividades, std::string(argv[1]));
+    // Extrai as conexões entre os nós
+    parsePares(pares, atividades, std::string(argv[1]));
     // Extrai os caminhos a partir dos pares
     parseCaminho(caminhos, pares, atividades);
-
-    // Imprime os caminhos
-    printMistico("CAMINHOS");
-    printCaminhos(caminhos);
 
     // Converte std::vector<std::pair> para std::map
     std::map<std::string, int> atvMap;
@@ -588,12 +620,33 @@ int main(int argc, const char *argv[]) {
     // Nao mais necessário
     atividades.clear();
 
+    // Extrai a execução dos dias
+    parseExecucao(dias, atvMap, std::string(argv[1]));
+
+#ifdef DEBUG
+    // Imprime o cabeçalho
+    printMistico("CABECALHO\n--------------");
+    for (const auto &atv : atividades) {
+        printMistico(atv.first << ": " << atv.second);
+    }
+    printMistico("--------------\n");
+
+    // Imprime as ligações
+    printMistico("PARES");
+    printCaminhos(pares);
+
+#endif
+
+    // Imprime os caminhos
+    printMistico("CAMINHOS");
+    printCaminhos(caminhos);
+
     // Vetor dos caminhos críticos
     // Armazena os indices do maior peso
     std::vector<int> criticos;
 
     // Calcula caminho(s) critico(s)
-    auto max = findCriticals(criticos, caminhos, atvMap);
+    const auto max = findCriticals(criticos, caminhos, atvMap);
 
     printMistico("CRITICOS\n--------------");
     std::cout << "Caminho(s) critico(s): duracao(" << max << ")\n";
@@ -604,17 +657,13 @@ int main(int argc, const char *argv[]) {
 
         for (int j = 0; j < caminhos[index].size(); ++j) {
             if (0 != j) std::cout << " - ";
-            auto peso = atvMap[caminhos[index][j]];
+            const auto peso = atvMap[caminhos[index][j]];
             std::cout << caminhos[index][j] << '(' << peso << ')';
         }
 
         std::cout << '\n';
     }
     printMistico("--------------\n");
-
-    std::vector<struct Day> dias;
-
-    parseExecucao(dias, atvMap, std::string(argv[1]));
 
     for (const auto &d : dias) {
         printMistico("Dia [" << d.dia << "]:");

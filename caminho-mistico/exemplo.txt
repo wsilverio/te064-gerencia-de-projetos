@@ -9,9 +9,9 @@
 {Atividade1,Atividade4}
 {Atividade4,fim}
 #
-1: {i:atividade3}
-2: {i:atividade1,atividade4}
-3: {f:atividade1}
-4: {f:atividade1,atividade4}
-5: {i:atividade3,atividade4;f:atividade1}
-6: {i:atividade3,atividade4;f:atividade1,atividade2}
+1: {i:Atividade3}
+2: {i:Atividade1,Atividade4}
+3: {f:Atividade1}
+4: {f:Atividade1,Atividade4}
+5: {i:Atividade3,Atividade4;f:Atividade1}
+6: {i:Atividade3,Atividade4;f:Atividade1,Atividade2}
