@@ -22,7 +22,7 @@
 
 // Para modo de compilação
 // Exibe msgs de debug e teste
-#define DEBUG false
+#define DEBUG true
 
 #if defined (_WIN32)
 #  ifndef S_ISDIR
@@ -41,19 +41,16 @@ struct Day {
 };
 
 struct Estatisticas {
-    std::string nome;
-    int peso;
-
-    bool iniciada;
-    bool finalizada;
-
-    int atraso;
-
-    int earlyStart;
-    int earlyFinish;
-    int lateStart;
-    int lateFinish;
-    int slack;
+    //std::string nome;
+    int peso = 0;
+    bool iniciada = false;
+    bool finalizada = false;
+    //int atraso = 0;
+    int earlyStart = 0;
+    int earlyFinish = 0;
+    int lateStart = 0;
+    int lateFinish = 0;
+    int slack = 0;
 };
 
 /// Escreve uma mensagem no console (std::cout)
@@ -114,21 +111,19 @@ void printCaminhos(const std::vector<std::vector<std::string>> &caminhos) {
 
 /// Exibe as estatísticas de uma determinada atividade
 /// @param atividade
-void printStatistics(const Estatisticas &atividade) {
-    printMistico("Atividade: " << atividade.nome);
+void printStatistics(const std::pair<std::string, Estatisticas> &atividade) {
+    printMistico("Atividade: " << atividade.first);
 #if DEBUG
-    printMistico("Peso: " << atividade.peso);
+    printMistico("Peso: " << atividade.second.peso);
+    printMistico("Iniciada: " << (atividade.second.iniciada ? "sim" : "nao"));
+    printMistico("Finalizada: " << (atividade.second.finalizada ? "sim" : "nao"));
+    //printMistico("Atraso: " << atividade.second.atraso);
 #endif
-    printMistico("Iniciada: " << (atividade.iniciada ? "sim" : "nao"));
-    printMistico("Finalizada: " << (atividade.finalizada ? "sim" : "nao"));
-#if DEBUG
-    printMistico("Atraso: " << atividade.atraso);
-#endif
-    printMistico("Early Start (ES): " << atividade.earlyStart);
-    printMistico("Early Finish (EF): " << atividade.earlyFinish);
-    printMistico("Late Start (LS): " << atividade.lateStart);
-    printMistico("Late Finish (LF): " << atividade.lateFinish);
-    printMistico("Slack (SL): " << atividade.slack);
+    printMistico("Early Start (ES): " << atividade.second.earlyStart);
+    printMistico("Early Finish (EF): " << atividade.second.earlyFinish);
+    printMistico("Late Start (LS): " << atividade.second.lateStart);
+    printMistico("Late Finish (LF): " << atividade.second.lateFinish);
+    printMistico("Slack (SL): " << atividade.second.slack);
 }
 
 /// Remove indices vazios
@@ -625,61 +620,117 @@ void parseExecucao(std::vector<struct Day> &days,
 
 }
 
-/// Calcula as estatísticas do projeto para um determinado dia
+/// Calcula as estatísticas do projeto
 ///     - Early Start (ES)
 ///     - Early Finish (EF)
 ///     - Late Start (LS)
 ///     - Late Finish (LF)
 ///     - Slack (SL)
 /// @param atividades vetor com as estatisticas das atividades
-/// @param day informações sobre a execução de um determinado dia
 /// @param caminhos vetor com todos os caminhos
-void statisticsCalc(std::vector<Estatisticas> &atividades,
-                    const Day &day,
-                    const std::vector<std::vector<std::string>> &caminhos) {
+void statisticsCalc(std::map<std::string, Estatisticas> &atividades,
+                    std::vector<std::vector<std::string>> caminhos) {
 
+    // Remove "inicio" e "fim"
+    std::for_each(caminhos.begin(), caminhos.end(),
+                  [](std::vector<std::string> &cam) {
+                      cam.pop_back(); // último elemento
+                      cam.erase(cam.begin()); // primeiro elemento
+                  });
 
-    // ES e Atraso
-    for (auto &atv : atividades) {
-        auto &es = atv.earlyStart;
-        auto &atraso = atv.atraso;
+    for (const auto &atv : atividades) {
+        for (const auto &cam : caminhos) {
 
-        if (day.dia == 1) {
+            // Busca pela atividade no caminho
+            const auto itFound = std::find(cam.begin(), cam.end(), atv.first);
 
-            // Tempo atividades anteriores
-            int t = 0;
-            for (const auto &cam : caminhos){
-                auto it = 
-            }
+            if (itFound != cam.end()) {
+                { // --------------- ES e EF
+                    // Calcula o tempo desde o inicio até a atividade
+                    int maiorAnterior = 0;
 
-            es = 1 + t;
+                    for (auto it = cam.begin(); it < itFound; ++it) {
+                        maiorAnterior += atividades[*it].peso;
+                    }
 
-        } else {
-            if (day.dia >= es) {
-                // ATRASO = ATRASO + ES_atual - ES_anterior
-                atraso -= es;
-                es = day.dia + (atv.iniciada ? 0 : 1);
-                atraso += es;
+                    if (maiorAnterior > atividades[atv.first].earlyStart) {
+                        // ES
+                        atividades[atv.first].earlyStart = maiorAnterior + 1; // 1: primeiro dia
+                        // EF = ES + Peso
+                        atividades[atv.first].earlyFinish = maiorAnterior + atividades[atv.first].peso;
+                    }
+                }
+
+                { // --------------- LS e LF
+                    int menorSerie = 0;
+
+                    for (auto it = itFound; it < cam.end(); ++it) {
+                        menorSerie += atividades[*it].peso;
+                    }
+
+                    if (0 == atividades[atv.first].lateStart ||
+                        menorSerie < atividades[atv.first].lateStart) {
+
+                        atividades[atv.first].lateStart = atividades[atv.first].earlyStart +
+                                                          -menorSerie;
+                    }
+
+                    // LF = LS + Peso
+                    atividades[atv.first].lateFinish = atividades[atv.first].lateStart +
+                                                       atividades[atv.first].peso;
+                }
+
+                { // --------------- SLACK
+                    // SL = LS - ES
+                    atividades[atv.first].slack = atividades[atv.first].lateStart -
+                                                  atividades[atv.first].earlyStart;
+                }
+
             }
         }
-
     }
 
-
-    for (auto &atv : atividades) {
-        auto &es = atv.earlyStart;
-        auto &ef = atv.earlyFinish;
-        auto &ls = atv.lateStart;
-        auto &lf = atv.lateFinish;
-        auto &sl = atv.slack;
-        auto &atraso = atv.atraso;
-
-        ef = es + atv.peso;
-        lf = ls + atv.peso;
-        sl = (lf - ef) - atraso;
-
-        if (sl < 0) { sl = 0; }
-    }
+    // ES e Atraso
+    //for (auto &atv : atividades) {
+    //    auto &es = atv.earlyStart;
+    //    auto &atraso = atv.atraso;
+    //
+    //    if (day.dia == 1) {
+    //
+    //        // Tempo atividades anteriores
+    //        int t = 0;
+    //        for (const auto &cam : caminhos){
+    //            auto it =
+    //        }
+    //
+    //        es = 1 + t;
+    //
+    //    } else {
+    //        if (day.dia >= es) {
+    //            // ATRASO = ATRASO + ES_atual - ES_anterior
+    //            atraso -= es;
+    //            es = day.dia + (atv.iniciada ? 0 : 1);
+    //            atraso += es;
+    //        }
+    //    }
+    //
+    //}
+    //
+    //
+    //for (auto &atv : atividades) {
+    //    auto &es = atv.earlyStart;
+    //    auto &ef = atv.earlyFinish;
+    //    auto &ls = atv.lateStart;
+    //    auto &lf = atv.lateFinish;
+    //    auto &sl = atv.slack;
+    //    auto &atraso = atv.atraso;
+    //
+    //    ef = es + atv.peso;
+    //    lf = ls + atv.peso;
+    //    sl = (lf - ef) - atraso;
+    //
+    //    if (sl < 0) { sl = 0; }
+    //}
 
 }
 
@@ -719,6 +770,12 @@ int main(int argc, const char *argv[]) {
     /// iniciadas {atvA, AtvB, ...}
     /// finalizadas {atvC, AtvD, ...}
     std::vector<struct Day> dias;
+
+    /// Mapa de estatísticas
+    /// Formato de armazenamento
+    /// first: nome
+    /// second = struct Estatisticas
+    std::map<std::string, Estatisticas> estatistica;
 
     // Extrai o cabeçalho a partir do arquivo
     parseAtv(atividades, std::string(argv[1]));
@@ -777,61 +834,61 @@ int main(int argc, const char *argv[]) {
     }
     printMistico("--------------\n");
 
-    // Vetor de estatísticas
-    std::vector<Estatisticas> estatisticasAtividades;
-
     // Inicializa o vetor com o nome de cada atividade
     for (const auto &atv : atividades) {
         if (atv.second == -1) continue;
 
-        Estatisticas a;
-        a.nome = atv.first;
-        a.peso = atv.second;
-        a.atraso = a.earlyStart = a.earlyFinish = a.lateStart = a.lateFinish = a.slack = 0;
-        a.iniciada = a.finalizada = false;
-
-        estatisticasAtividades.push_back(a);
+        Estatisticas e;
+        e.peso = atv.second;
+        estatistica.insert(std::make_pair(atv.first, e));
     }
 
-    /// Interação com o usuário
-    for (const auto &d : dias) {
-        printMistico("\nESTATISTICAS\n--------------------------------------------------");
-        std::cout << "\nPressione ENTER:";
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    statisticsCalc(estatistica, caminhos);
 
-        printMistico("Dia: " << d.dia);
-
-        std::string str_aux = "";
-        for (const auto &i : d.iniciadas) {
-            str_aux += i + " ";
-            for (auto &atv : estatisticasAtividades) {
-                if (i == atv.nome) {
-                    atv.iniciada = true;
-                }
-            }
-        }
-        printMistico("Iniciadas: " << str_aux);
-
-        str_aux.clear();
-        for (const auto &f : d.finalizadas) {
-            str_aux += f + " ";
-            for (auto &atv : estatisticasAtividades) {
-                if (f == atv.nome) {
-                    atv.finalizada = true;
-                }
-            }
-        }
-        printMistico("Finalizadas: " << str_aux);
-
-        printMistico("");
-
-        statisticsCalc(estatisticasAtividades, d, caminhos);
-
-        for (const auto &atv : estatisticasAtividades) {
-            printMistico("---------");
-            printStatistics(atv);
-        }
+    for (const auto atv : estatistica) {
+        printMistico("---------");
+        printStatistics(std::make_pair(atv.first, atv.second));
     }
+
+    ///// Interação com o usuário
+    //for (const auto &d : dias) {
+    //    printMistico("\nESTATISTICAS\n--------------------------------------------------");
+    //    std::cout << "\nPressione ENTER:";
+    //    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    //
+    //    printMistico("Dia: " << d.dia);
+    //
+    //    std::string str_aux = "";
+    //    for (const auto &i : d.iniciadas) {
+    //        str_aux += i + " ";
+    //        for (auto &atv : estatisticasAtividades) {
+    //            if (i == atv.nome) {
+    //                atv.iniciada = true;
+    //            }
+    //        }
+    //    }
+    //    printMistico("Iniciadas: " << str_aux);
+    //
+    //    str_aux.clear();
+    //    for (const auto &f : d.finalizadas) {
+    //        str_aux += f + " ";
+    //        for (auto &atv : estatisticasAtividades) {
+    //            if (f == atv.nome) {
+    //                atv.finalizada = true;
+    //            }
+    //        }
+    //    }
+    //    printMistico("Finalizadas: " << str_aux);
+    //
+    //    printMistico("");
+    //
+    //    statisticsCalc(estatisticasAtividades, d, caminhos);
+    //
+    //    for (const auto &atv : estatisticasAtividades) {
+    //        printMistico("---------");
+    //        printStatistics(atv);
+    //    }
+    //}
 
     return 0;
 }
