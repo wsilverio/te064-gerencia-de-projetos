@@ -40,8 +40,21 @@ struct Day {
     std::vector<std::string> finalizadas;
 };
 
+struct Estatisticas {
+    std::string nome;
+    int peso;
+    bool iniciada;
+    bool finalizada;
+    int earlyStart;
+    int earlyFinish;
+    int lateStart;
+    int lateFinish;
+    int slack;
+};
+
 /// Escreve uma mensagem no console (std::cout)
 /// @param p mensagem
+
 #define printMistico(p) std::cout << p << "\n";
 
 /// Escreve uma mensagem no console e fecha o programa (erro)
@@ -93,6 +106,22 @@ void printCaminhos(const std::vector<std::vector<std::string>> &caminhos) {
         printCaminho(caminhos[i]);
     }
     std::cout << "--------------\n\n";
+}
+
+/// Exibe as estatísticas de uma determinada atividade
+/// @param atividade
+void printStatistics(const Estatisticas &atividade){
+    printMistico("Atividade: " << atividade.nome);
+    //printMistico("Peso: " << atividade.peso);
+
+    printMistico("Iniciada: " << (atividade.iniciada?"sim":"nao"));
+    printMistico("Finalizada: " << (atividade.finalizada?"sim":"nao"));
+
+    printMistico("Early Start (ES): " << atividade.earlyStart);
+    printMistico("Early Finish (EF): " << atividade.earlyFinish);
+    printMistico("Late Start (LS): " << atividade.lateStart);
+    printMistico("Late Finish (LF): " << atividade.lateFinish);
+    printMistico("Slack (SL): " << atividade.slack);
 }
 
 /// Remove indices vazios
@@ -445,6 +474,10 @@ int findCriticals(std::vector<int> &critical,
     return max;
 }
 
+/// Extrai a execução do projeto
+/// @param days vetor com os dias executados
+/// @param header mapa com o cabeçalho
+/// @param filename nome do arquivo
 void parseExecucao(std::vector<struct Day> &days,
                    std::map<std::string, int> &header,
                    const std::string &filename) {
@@ -585,6 +618,40 @@ void parseExecucao(std::vector<struct Day> &days,
 
 }
 
+/// Calcula as estatísticas do projeto para um determinado dia
+///     - Early Start (ES)
+///     - Early Finish (EF)
+///     - Late Start (LS)
+///     - Late Finish (LF)
+///     - Slack (SL)
+/// @param atividades vetor com as estatisticas das atividades
+/// @param day informações sobre a execução de um determinado dia
+/// @param caminhos vetor com todos os caminhos
+void statisticsCalc(std::vector<Estatisticas> &atividades,
+                    const Day &day,
+                    const std::vector<std::vector<std::string>> &caminhos) {
+
+    for (auto &atv : atividades){
+        auto &es = atv.earlyStart;
+        auto &ef = atv.earlyFinish;
+        auto &ls = atv.lateStart;
+        auto &lf = atv.lateFinish;
+        auto &sl = atv.slack;
+
+        if (day.dia == 1){
+
+            es = 1 + 666;
+            ef = es + atv.peso;
+            ls = es + 666 - 999 - atv.peso;
+            lf = ls + atv.peso;
+            sl = lf - ef;
+        } else {
+
+        }
+    }
+
+}
+
 int main(int argc, const char *argv[]) {
 
     // Verifica os argumentos do programa
@@ -679,20 +746,60 @@ int main(int argc, const char *argv[]) {
     }
     printMistico("--------------\n");
 
+    // Vetor de estatísticas
+    std::vector<Estatisticas> estatisticasAtividades;
+
+    // Inicializa o vetor com o nome de cada atividade
+    for (const auto &atv : atividades){
+        if(atv.second == -1) continue;
+
+        Estatisticas a;
+        a.nome = atv.first;
+        a.peso = atv.second;
+        a.earlyStart = a.earlyFinish = a.lateStart = a.lateFinish = a.slack = 0;
+        a.iniciada = a.finalizada = false;
+
+        estatisticasAtividades.push_back(a);
+    }
+
     /// Interação com o usuário
     for (const auto &d : dias) {
+        printMistico("\nESTATISTICAS\n--------------------------------------------------");
         std::cout << "\nPressione ENTER:";
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
         printMistico("Dia: " << d.dia);
 
         std::string str_aux = "";
-        for (const auto &i : d.iniciadas) str_aux += i + " ";
+        for (const auto &i : d.iniciadas){
+            str_aux += i + " ";
+            for (auto &atv : estatisticasAtividades){
+                if(i == atv.nome){
+                    atv.iniciada = true;
+                }
+            }
+        }
         printMistico("Iniciadas: " << str_aux);
 
         str_aux.clear();
-        for (const auto &i : d.finalizadas) str_aux += i + " ";
+        for (const auto &f : d.iniciadas){
+            str_aux += f + " ";
+            for (auto &atv : estatisticasAtividades){
+                if(f == atv.nome){
+                    atv.finalizada = true;
+                }
+            }
+        }
         printMistico("Finalizadas: " << str_aux);
+
+        printMistico("");
+
+        statisticsCalc(estatisticasAtividades, d, caminhos);
+
+        for (const auto &atv : estatisticasAtividades){
+            printMistico("---------");
+            printStatistics(atv);
+        }
     }
 
     return 0;
