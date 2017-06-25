@@ -22,7 +22,7 @@
 
 // Para modo de compilação
 // Exibe msgs de debug e teste
-#define DEBUG true
+#define DEBUG false
 
 #if defined (_WIN32)
 #  ifndef S_ISDIR
@@ -36,8 +36,8 @@
 
 struct Day {
     int dia;
-    std::vector <std::string> iniciadas;
-    std::vector <std::string> finalizadas;
+    std::vector<std::string> iniciadas;
+    std::vector<std::string> finalizadas;
 };
 
 /// Escreve uma mensagem no console (std::cout)
@@ -47,13 +47,13 @@ struct Day {
 /// Escreve uma mensagem no console e fecha o programa (erro)
 /// @param msg mensagem de erro
 #ifdef _WIN32
-# define erroMistico(msg)			\
-  printMistico("\nERRO: " << msg);	\
-  std::cin.get();					\
+# define erroMistico(msg)           \
+  printMistico("\nERRO: " << msg);  \
+  std::cin.get();                   \
   exit(EXIT_FAILURE);
 #else
-# define erroMistico(msg)			\
-  printMistico("\nERRO: " << msg);	\
+# define erroMistico(msg)           \
+  printMistico("\nERRO: " << msg);  \
   exit(EXIT_FAILURE);
 #endif
 
@@ -66,7 +66,7 @@ struct Day {
   erroMistico(msg);
 
 bool isInteger(const std::string &str) {
-	std::locale loc;
+    std::locale loc;
     for (auto digi : str) {
         if (!std::isdigit(digi, loc)) {
             return false;
@@ -77,7 +77,7 @@ bool isInteger(const std::string &str) {
 
 /// Exibe 1 único caminho
 /// @param caminho strings com os nomes dos nós
-void printCaminho(const std::vector <std::string> &caminho) {
+void printCaminho(const std::vector<std::string> &caminho) {
     for (const auto &nome : caminho) {
         std::cout << nome << " ";
     }
@@ -86,7 +86,7 @@ void printCaminho(const std::vector <std::string> &caminho) {
 
 /// Exibe os caminhos
 /// @param caminhos caminhos a serem exibidos
-void printCaminhos(const std::vector <std::vector<std::string>> &caminhos) {
+void printCaminhos(const std::vector<std::vector<std::string>> &caminhos) {
     std::cout << "--------------\n";
     for (int i = 0; i < caminhos.size(); ++i) {
         std::cout << "[" << i << "] ";
@@ -97,7 +97,7 @@ void printCaminhos(const std::vector <std::vector<std::string>> &caminhos) {
 
 /// Remove indices vazios
 /// @param vetor vetor a ser analisado
-void removeVazios(std::vector <std::vector<std::string>> &vetor) {
+void removeVazios(std::vector<std::vector<std::string>> &vetor) {
     for (long j = vetor.size() - 1; j >= 0; --j) {
         if (vetor[j].empty()) {
             vetor.erase(vetor.begin() + j);
@@ -108,7 +108,7 @@ void removeVazios(std::vector <std::vector<std::string>> &vetor) {
 /// Remove vetores duplicados
 /// @param vetor vetor a ser analisado
 /// @param indices mapa com os indices a serem removidos
-void removeDuplicados(std::vector <std::vector<std::string>> &vetor) {
+void removeDuplicados(std::vector<std::vector<std::string>> &vetor) {
     for (auto i = 0; i < vetor.size(); ++i) {
         for (auto j = 0; j < vetor.size(); ++j) {
             if (i == j) continue;
@@ -186,7 +186,7 @@ void testFile(const std::string &filename) {
 /// Extrai o cabeçalho das atividades
 /// @param atv vetor com as atividades: {nome, peso}
 /// @param filename caminho do arquivo
-void parseAtv(std::vector <std::pair<std::string, int>> &atv,
+void parseAtv(std::vector<std::pair<std::string, int>> &atv,
               const std::string &filename) {
 
     std::ifstream file(filename);
@@ -280,8 +280,8 @@ void parseAtv(std::vector <std::pair<std::string, int>> &atv,
 /// @param pairs conexões entre as atividades
 /// @param atv vetor com as atividades
 /// @param filename caminho do arquivo
-void parsePares(std::vector <std::vector<std::string>> &pairs,
-                std::vector <std::pair<std::string, int>> &atv,
+void parsePares(std::vector<std::vector<std::string>> &pairs,
+                std::vector<std::pair<std::string, int>> &atv,
                 const std::string &filename) {
 
     std::ifstream file(filename);
@@ -359,9 +359,9 @@ void parsePares(std::vector <std::vector<std::string>> &pairs,
 /// @param caminhos conexões extraídos: cada "linha" do vetor é um caminho
 /// @param pairs conexões entre as atividades
 /// @param atv mapa com as atividades
-void parseCaminho(std::vector <std::vector<std::string>> &caminhos,
-                  std::vector <std::vector<std::string>> &pairs,
-                  std::vector <std::pair<std::string, int>> &atv) {
+void parseCaminho(std::vector<std::vector<std::string>> &caminhos,
+                  std::vector<std::vector<std::string>> &pairs,
+                  std::vector<std::pair<std::string, int>> &atv) {
 
     // Encontra os nomes das atividades "inicio" e "fim" (ou seus equivalentes)
     std::string inicio, fim;
@@ -420,7 +420,7 @@ void parseCaminho(std::vector <std::vector<std::string>> &caminhos,
 /// @param header cabeçalho
 /// @var max peso critico
 int findCriticals(std::vector<int> &critical,
-                  const std::vector <std::vector<std::string>> &path,
+                  const std::vector<std::vector<std::string>> &path,
                   std::map<std::string, int> &header) {
 
     int max = 0;
@@ -592,7 +592,7 @@ int main(int argc, const char *argv[]) {
         std::string helpMessage =
                 "arquivo invalido. Tente:\n"
                         "$ " + std::string(argv[0]) +
-				" caminho/do/arquivo.txt";
+                " caminho/do/arquivo.txt";
 
         erroMistico(helpMessage);
     }
@@ -604,16 +604,16 @@ int main(int argc, const char *argv[]) {
 
     /// Vetor das atividades (cabeçalho)
     /// Formato de armazenamento: {{"nome", peso}, ...}
-    std::vector <std::pair<std::string, int>> atividades;
+    std::vector<std::pair<std::string, int>> atividades;
 
     /// Vetor com as conexões
     /// Formato de armazenamento: {{"from", "to"}, ...}
-    std::vector <std::vector<std::string>> pares;
+    std::vector<std::vector<std::string>> pares;
 
     /// Vetor dos caminhos
     /// Formato de armazenamento:
     ///     {{"inicio","atvA","atvB","atvC",...,"fim"}, ...}
-    std::vector <std::vector<std::string>> caminhos;
+    std::vector<std::vector<std::string>> caminhos;
 
     /// Vetor da execução dos dias
     /// Formato de armazenamento:
@@ -635,13 +635,10 @@ int main(int argc, const char *argv[]) {
         atvMap[atv.first] = atv.second;
     }
 
-    // Nao mais necessário
-    atividades.clear();
-
     // Extrai a execução dos dias
     parseExecucao(dias, atvMap, std::string(argv[1]));
 
-#ifdef DEBUG
+#if DEBUG
     // Imprime o cabeçalho
     printMistico("CABECALHO\n--------------");
     for (const auto &atv : atividades) {
@@ -666,7 +663,7 @@ int main(int argc, const char *argv[]) {
     // Calcula caminho(s) critico(s)
     const auto max = findCriticals(criticos, caminhos, atvMap);
 
-    printMistico("CRITICOS\n--------------");
+    printMistico("CRITICO(S)\n--------------");
     std::cout << "Caminho(s) critico(s): duracao(" << max << ")\n";
 
     // Exibe o(s) caminho(s) critico(s)
@@ -683,8 +680,10 @@ int main(int argc, const char *argv[]) {
     }
     printMistico("--------------\n");
 
+    /// Interação com o usuário
     for (const auto &d : dias) {
-        printMistico("Dia [" << d.dia << "]:");
+        std::cout << "\nPressione ENTER:";
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
     }
 
     return 0;
