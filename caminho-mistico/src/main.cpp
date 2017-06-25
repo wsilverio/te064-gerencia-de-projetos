@@ -43,8 +43,12 @@ struct Day {
 struct Estatisticas {
     std::string nome;
     int peso;
+
     bool iniciada;
     bool finalizada;
+
+    int atraso;
+
     int earlyStart;
     int earlyFinish;
     int lateStart;
@@ -110,13 +114,16 @@ void printCaminhos(const std::vector<std::vector<std::string>> &caminhos) {
 
 /// Exibe as estatísticas de uma determinada atividade
 /// @param atividade
-void printStatistics(const Estatisticas &atividade){
+void printStatistics(const Estatisticas &atividade) {
     printMistico("Atividade: " << atividade.nome);
-    //printMistico("Peso: " << atividade.peso);
-
-    printMistico("Iniciada: " << (atividade.iniciada?"sim":"nao"));
-    printMistico("Finalizada: " << (atividade.finalizada?"sim":"nao"));
-
+#if DEBUG
+    printMistico("Peso: " << atividade.peso);
+#endif
+    printMistico("Iniciada: " << (atividade.iniciada ? "sim" : "nao"));
+    printMistico("Finalizada: " << (atividade.finalizada ? "sim" : "nao"));
+#if DEBUG
+    printMistico("Atraso: " << atividade.atraso);
+#endif
     printMistico("Early Start (ES): " << atividade.earlyStart);
     printMistico("Early Finish (EF): " << atividade.earlyFinish);
     printMistico("Late Start (LS): " << atividade.lateStart);
@@ -631,23 +638,47 @@ void statisticsCalc(std::vector<Estatisticas> &atividades,
                     const Day &day,
                     const std::vector<std::vector<std::string>> &caminhos) {
 
-    for (auto &atv : atividades){
+
+    // ES e Atraso
+    for (auto &atv : atividades) {
+        auto &es = atv.earlyStart;
+        auto &atraso = atv.atraso;
+
+        if (day.dia == 1) {
+
+            // Tempo atividades anteriores
+            int t = 0;
+            for (const auto &cam : caminhos){
+                auto it = 
+            }
+
+            es = 1 + t;
+
+        } else {
+            if (day.dia >= es) {
+                // ATRASO = ATRASO + ES_atual - ES_anterior
+                atraso -= es;
+                es = day.dia + (atv.iniciada ? 0 : 1);
+                atraso += es;
+            }
+        }
+
+    }
+
+
+    for (auto &atv : atividades) {
         auto &es = atv.earlyStart;
         auto &ef = atv.earlyFinish;
         auto &ls = atv.lateStart;
         auto &lf = atv.lateFinish;
         auto &sl = atv.slack;
+        auto &atraso = atv.atraso;
 
-        if (day.dia == 1){
+        ef = es + atv.peso;
+        lf = ls + atv.peso;
+        sl = (lf - ef) - atraso;
 
-            es = 1 + 666;
-            ef = es + atv.peso;
-            ls = es + 666 - 999 - atv.peso;
-            lf = ls + atv.peso;
-            sl = lf - ef;
-        } else {
-
-        }
+        if (sl < 0) { sl = 0; }
     }
 
 }
@@ -750,13 +781,13 @@ int main(int argc, const char *argv[]) {
     std::vector<Estatisticas> estatisticasAtividades;
 
     // Inicializa o vetor com o nome de cada atividade
-    for (const auto &atv : atividades){
-        if(atv.second == -1) continue;
+    for (const auto &atv : atividades) {
+        if (atv.second == -1) continue;
 
         Estatisticas a;
         a.nome = atv.first;
         a.peso = atv.second;
-        a.earlyStart = a.earlyFinish = a.lateStart = a.lateFinish = a.slack = 0;
+        a.atraso = a.earlyStart = a.earlyFinish = a.lateStart = a.lateFinish = a.slack = 0;
         a.iniciada = a.finalizada = false;
 
         estatisticasAtividades.push_back(a);
@@ -771,10 +802,10 @@ int main(int argc, const char *argv[]) {
         printMistico("Dia: " << d.dia);
 
         std::string str_aux = "";
-        for (const auto &i : d.iniciadas){
+        for (const auto &i : d.iniciadas) {
             str_aux += i + " ";
-            for (auto &atv : estatisticasAtividades){
-                if(i == atv.nome){
+            for (auto &atv : estatisticasAtividades) {
+                if (i == atv.nome) {
                     atv.iniciada = true;
                 }
             }
@@ -782,10 +813,10 @@ int main(int argc, const char *argv[]) {
         printMistico("Iniciadas: " << str_aux);
 
         str_aux.clear();
-        for (const auto &f : d.iniciadas){
+        for (const auto &f : d.finalizadas) {
             str_aux += f + " ";
-            for (auto &atv : estatisticasAtividades){
-                if(f == atv.nome){
+            for (auto &atv : estatisticasAtividades) {
+                if (f == atv.nome) {
                     atv.finalizada = true;
                 }
             }
@@ -796,7 +827,7 @@ int main(int argc, const char *argv[]) {
 
         statisticsCalc(estatisticasAtividades, d, caminhos);
 
-        for (const auto &atv : estatisticasAtividades){
+        for (const auto &atv : estatisticasAtividades) {
             printMistico("---------");
             printStatistics(atv);
         }
