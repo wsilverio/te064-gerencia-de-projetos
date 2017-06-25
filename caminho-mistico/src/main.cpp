@@ -113,8 +113,8 @@ void printCaminhos(const std::vector<std::vector<std::string>> &caminhos) {
 /// @param atividade
 void printStatistics(const std::pair<std::string, Estatisticas> &atividade) {
     printMistico("Atividade: " << atividade.first);
-#if DEBUG
     printMistico("Peso: " << atividade.second.peso);
+#if DEBUG
     printMistico("Iniciada: " << (atividade.second.iniciada ? "sim" : "nao"));
     printMistico("Finalizada: " << (atividade.second.finalizada ? "sim" : "nao"));
     //printMistico("Atraso: " << atividade.second.atraso);
@@ -693,8 +693,7 @@ void statisticsCalc(std::map<std::string, Estatisticas> &atividades,
 
                 { // --------------- SLACK
                     // SL = LS - ES
-                    atv.second.slack = atv.second.lateStart -
-                                       atv.second.earlyStart;
+                    atv.second.slack = atv.second.lateStart - atv.second.earlyStart;
                 }
             }
         }
@@ -760,6 +759,7 @@ int main(int argc, const char *argv[]) {
     // Extrai a execução dos dias
     parseExecucao(dias, mapCabecalho, std::string(argv[1]));
 
+#if DEBUG
     // Imprime o cabeçalho
     printMistico("CABECALHO\n--------------");
     for (const auto &atv : cabecalho) {
@@ -767,7 +767,6 @@ int main(int argc, const char *argv[]) {
     }
     printMistico("--------------\n");
 
-#if DEBUG
     // Imprime as ligações
     printMistico("PARES");
     printCaminhos(pares);
@@ -818,13 +817,30 @@ int main(int argc, const char *argv[]) {
     }
 
     ///// Interação com o usuário
-    //for (const auto &d : dias) {
-    //    printMistico("\nESTATISTICAS\n--------------------------------------------------");
-    //    std::cout << "\nPressione ENTER:";
-    //    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    //
-    //    printMistico("Dia: " << d.dia);
-    //
+    printMistico("\nESTATISTICAS\n--------------------------------------------------");
+    for (const auto &d : dias) {
+        std::cout << "\nPressione ENTER:";
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+        printMistico("Dia: " << d.dia);
+
+        if(!d.iniciadas.empty()){
+            std::cout << "Atividade(s) iniciada(s): ";
+            for (const auto &atv : d.iniciadas){
+                std::cout << atv << ' ';
+            }
+            printMistico("");
+        }
+
+        if(!d.finalizadas.empty()){
+            std::cout << "Atividade(s) finalizada(s): ";
+            for (const auto &atv : d.finalizadas){
+                std::cout << atv << ' ';
+            }
+            printMistico("");
+        }
+
+
     //    std::string str_aux = "";
     //    for (const auto &i : d.iniciadas) {
     //        str_aux += i + " ";
@@ -855,7 +871,8 @@ int main(int argc, const char *argv[]) {
     //        printMistico("---------");
     //        printStatistics(atv);
     //    }
-    //}
+        printMistico("\n---------------");
+    }
 
     return 0;
 }
