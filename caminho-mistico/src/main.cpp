@@ -22,7 +22,7 @@
 
 // Para modo de compilação
 // Exibe msgs de debug e teste
-#define DEBUG true
+#define DEBUG false
 
 #if defined (_WIN32)
 #  ifndef S_ISDIR
@@ -352,23 +352,23 @@ void parsePares(std::vector<std::vector<std::string>> &pairs,
                 auto to = line.substr(0, line.find('}'));
 
                 // Verifica se a atividade esta no cabeçalho
-                bool fromWasFound = false;
-                bool toWasFound = false;
+                bool fromFound = false;
+                bool toFound = false;
 
                 for (const auto &a : atv) {
                     if (a.first == from)
-                        fromWasFound = true;
+                        fromFound = true;
                     else if (a.first == to)
-                        toWasFound = true;
+                        toFound = true;
 
-                    if (fromWasFound && toWasFound) break;
+                    if (fromFound && toFound) break;
                 }
 
-                if (!(fromWasFound)) {
+                if (!(fromFound)) {
                     erroArquivoMistico(file,
                                        "\"" << from << "\" "
                                                "nao especificada no cabecalho");
-                } else if (!(toWasFound)) {
+                } else if (!(toFound)) {
                     erroArquivoMistico(file,
                                        "\"" << to << "\" "
                                                "nao especificada no cabecalho");
@@ -445,6 +445,22 @@ void parseCaminho(std::vector<std::vector<std::string>> &caminhos,
     removeDuplicados(caminhos);
 }
 
+/// Calcula o peso de um caminho
+/// @param path caminho a ser calculado
+/// @param header cabeçalho
+/// @var sum peso
+int calcPeso(const std::vector<std::string> &path,
+             std::map<std::string, int> &header) {
+
+    int sum = 0;
+    for (const auto &atv : path) {
+        if (header[atv] > 0) {
+            sum += header[atv];
+        }
+    }
+    return sum;
+}
+
 /// Calcula o(s) caminho(s) critico(s)
 /// @param critical vetor com os indices dos caminhos críticos
 /// @param path caminhos
@@ -457,19 +473,13 @@ int findCriticals(std::vector<int> &critical,
     int max = 0;
 
     for (int i = 0; i < path.size(); ++i) {
-        int sum = 0;
-
-        for (const auto &c : path[i]) {
-            if (header[c] > 0) {
-                sum += header[c];
-            }
-        }
+        int peso = calcPeso(path[i], header);
         // Adiciona o índice ao vetor caso seja o maior
-        if (sum > max) {
-            max = sum;
+        if (peso > max) {
+            max = peso;
             critical.clear();
             critical.push_back(i);
-        } else if (sum == max) {
+        } else if (peso == max) {
             critical.push_back(i);
         }
     }
@@ -628,110 +638,67 @@ void parseExecucao(std::vector<struct Day> &days,
 ///     - Slack (SL)
 /// @param atividades vetor com as estatisticas das atividades
 /// @param caminhos vetor com todos os caminhos
+/// @param header cabeçalho
 void statisticsCalc(std::map<std::string, Estatisticas> &atividades,
-                    std::vector<std::vector<std::string>> caminhos) {
+                    std::vector<std::vector<std::string>> caminhos,
+                    std::map<std::string, int> &header,
+                    const int pesoCritico) {
 
-    // Remove "inicio" e "fim"
+    // Remove "inicio" de cada caminho
     std::for_each(caminhos.begin(), caminhos.end(),
                   [](std::vector<std::string> &cam) {
                       cam.pop_back(); // último elemento
                       cam.erase(cam.begin()); // primeiro elemento
                   });
 
-    for (const auto &atv : atividades) {
+    for (auto &atv : atividades) {
         for (const auto &cam : caminhos) {
-
             // Busca pela atividade no caminho
             const auto itFound = std::find(cam.begin(), cam.end(), atv.first);
-
             if (itFound != cam.end()) {
-                { // --------------- ES e EF
+                { // ES e EF
                     // Calcula o tempo desde o inicio até a atividade
-                    int maiorAnterior = 0;
-
+                    std::vector<std::string> aux;
                     for (auto it = cam.begin(); it < itFound; ++it) {
-                        maiorAnterior += atividades[*it].peso;
+                        aux.push_back(*it);
                     }
 
-                    if (maiorAnterior > atividades[atv.first].earlyStart) {
+                    int maiorAnterior = 1 + calcPeso(aux, header); // 1: primeiro dia
+
+                    if (maiorAnterior > atv.second.earlyStart) {
                         // ES
-                        atividades[atv.first].earlyStart = maiorAnterior + 1; // 1: primeiro dia
+                        atv.second.earlyStart = maiorAnterior;
                         // EF = ES + Peso
-                        atividades[atv.first].earlyFinish = maiorAnterior + atividades[atv.first].peso;
+                        atv.second.earlyFinish = maiorAnterior + atv.second.peso;
                     }
                 }
 
-                { // --------------- LS e LF
-                    int menorSerie = 0;
-
+                { // LS e LF
+                    std::vector<std::string> aux;
                     for (auto it = itFound; it < cam.end(); ++it) {
-                        menorSerie += atividades[*it].peso;
+                        aux.push_back(*it);
                     }
 
-                    if (0 == atividades[atv.first].lateStart ||
-                        menorSerie < atividades[atv.first].lateStart) {
+                    int menorPosterior = -1 + calcPeso(aux, header); // 1: primeiro dia
 
-                        atividades[atv.first].lateStart = atividades[atv.first].earlyStart +
-                                                          -menorSerie;
+                    if (0 == atv.second.lateStart ||
+                        menorPosterior < atv.second.lateStart) {
+
+                        // LS
+                        atv.second.lateStart = pesoCritico - menorPosterior;
+                        // LF = LS + Peso
+                        atv.second.lateFinish = atv.second.lateStart + atv.second.peso;
                     }
-
-                    // LF = LS + Peso
-                    atividades[atv.first].lateFinish = atividades[atv.first].lateStart +
-                                                       atividades[atv.first].peso;
                 }
 
                 { // --------------- SLACK
                     // SL = LS - ES
-                    atividades[atv.first].slack = atividades[atv.first].lateStart -
-                                                  atividades[atv.first].earlyStart;
+                    atv.second.slack = atv.second.lateStart -
+                                       atv.second.earlyStart;
                 }
-
             }
         }
     }
-
-    // ES e Atraso
-    //for (auto &atv : atividades) {
-    //    auto &es = atv.earlyStart;
-    //    auto &atraso = atv.atraso;
-    //
-    //    if (day.dia == 1) {
-    //
-    //        // Tempo atividades anteriores
-    //        int t = 0;
-    //        for (const auto &cam : caminhos){
-    //            auto it =
-    //        }
-    //
-    //        es = 1 + t;
-    //
-    //    } else {
-    //        if (day.dia >= es) {
-    //            // ATRASO = ATRASO + ES_atual - ES_anterior
-    //            atraso -= es;
-    //            es = day.dia + (atv.iniciada ? 0 : 1);
-    //            atraso += es;
-    //        }
-    //    }
-    //
-    //}
-    //
-    //
-    //for (auto &atv : atividades) {
-    //    auto &es = atv.earlyStart;
-    //    auto &ef = atv.earlyFinish;
-    //    auto &ls = atv.lateStart;
-    //    auto &lf = atv.lateFinish;
-    //    auto &sl = atv.slack;
-    //    auto &atraso = atv.atraso;
-    //
-    //    ef = es + atv.peso;
-    //    lf = ls + atv.peso;
-    //    sl = (lf - ef) - atraso;
-    //
-    //    if (sl < 0) { sl = 0; }
-    //}
-
 }
 
 int main(int argc, const char *argv[]) {
@@ -753,7 +720,7 @@ int main(int argc, const char *argv[]) {
 
     /// Vetor das atividades (cabeçalho)
     /// Formato de armazenamento: {{"nome", peso}, ...}
-    std::vector<std::pair<std::string, int>> atividades;
+    std::vector<std::pair<std::string, int>> cabecalho;
 
     /// Vetor com as conexões
     /// Formato de armazenamento: {{"from", "to"}, ...}
@@ -778,24 +745,24 @@ int main(int argc, const char *argv[]) {
     std::map<std::string, Estatisticas> estatistica;
 
     // Extrai o cabeçalho a partir do arquivo
-    parseAtv(atividades, std::string(argv[1]));
+    parseAtv(cabecalho, std::string(argv[1]));
     // Extrai as conexões entre os nós
-    parsePares(pares, atividades, std::string(argv[1]));
+    parsePares(pares, cabecalho, std::string(argv[1]));
     // Extrai os caminhos a partir dos pares
-    parseCaminho(caminhos, pares, atividades);
+    parseCaminho(caminhos, pares, cabecalho);
 
     // Converte std::vector<std::pair> para std::map
-    std::map<std::string, int> atvMap;
-    for (const auto &atv : atividades) {
-        atvMap[atv.first] = atv.second;
+    std::map<std::string, int> mapCabecalho;
+    for (const auto &atv : cabecalho) {
+        mapCabecalho[atv.first] = atv.second;
     }
 
     // Extrai a execução dos dias
-    parseExecucao(dias, atvMap, std::string(argv[1]));
+    parseExecucao(dias, mapCabecalho, std::string(argv[1]));
 
     // Imprime o cabeçalho
     printMistico("CABECALHO\n--------------");
-    for (const auto &atv : atividades) {
+    for (const auto &atv : cabecalho) {
         printMistico(atv.first << ": " << atv.second);
     }
     printMistico("--------------\n");
@@ -815,7 +782,7 @@ int main(int argc, const char *argv[]) {
     std::vector<int> criticos;
 
     // Calcula caminho(s) critico(s)
-    const auto max = findCriticals(criticos, caminhos, atvMap);
+    const auto max = findCriticals(criticos, caminhos, mapCabecalho);
 
     printMistico("CRITICO(S)\n--------------");
     printMistico("Caminho(s) critico(s): duracao(" << max << ")");
@@ -826,7 +793,7 @@ int main(int argc, const char *argv[]) {
 
         for (int j = 0; j < caminhos[index].size(); ++j) {
             if (0 != j) std::cout << " - ";
-            const auto peso = atvMap[caminhos[index][j]];
+            const auto peso = mapCabecalho[caminhos[index][j]];
             std::cout << caminhos[index][j] << '(' << peso << ')';
         }
 
@@ -835,7 +802,7 @@ int main(int argc, const char *argv[]) {
     printMistico("--------------\n");
 
     // Inicializa o vetor com o nome de cada atividade
-    for (const auto &atv : atividades) {
+    for (const auto &atv : mapCabecalho) {
         if (atv.second == -1) continue;
 
         Estatisticas e;
@@ -843,7 +810,7 @@ int main(int argc, const char *argv[]) {
         estatistica.insert(std::make_pair(atv.first, e));
     }
 
-    statisticsCalc(estatistica, caminhos);
+    statisticsCalc(estatistica, caminhos, mapCabecalho, max);
 
     for (const auto atv : estatistica) {
         printMistico("---------");
