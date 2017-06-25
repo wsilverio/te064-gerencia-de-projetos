@@ -638,7 +638,6 @@ int main(int argc, const char *argv[]) {
     // Extrai a execução dos dias
     parseExecucao(dias, atvMap, std::string(argv[1]));
 
-#if DEBUG
     // Imprime o cabeçalho
     printMistico("CABECALHO\n--------------");
     for (const auto &atv : atividades) {
@@ -646,10 +645,10 @@ int main(int argc, const char *argv[]) {
     }
     printMistico("--------------\n");
 
+#if DEBUG
     // Imprime as ligações
     printMistico("PARES");
     printCaminhos(pares);
-
 #endif
 
     // Imprime os caminhos
@@ -664,7 +663,7 @@ int main(int argc, const char *argv[]) {
     const auto max = findCriticals(criticos, caminhos, atvMap);
 
     printMistico("CRITICO(S)\n--------------");
-    std::cout << "Caminho(s) critico(s): duracao(" << max << ")\n";
+    printMistico("Caminho(s) critico(s): duracao(" << max << ")");
 
     // Exibe o(s) caminho(s) critico(s)
     for (const auto &index : criticos) {
@@ -683,7 +682,17 @@ int main(int argc, const char *argv[]) {
     /// Interação com o usuário
     for (const auto &d : dias) {
         std::cout << "\nPressione ENTER:";
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+        printMistico("Dia: " << d.dia);
+
+        std::string str_aux = "";
+        for (const auto &i : d.iniciadas) str_aux += i + " ";
+        printMistico("Iniciadas: " << str_aux);
+
+        str_aux.clear();
+        for (const auto &i : d.finalizadas) str_aux += i + " ";
+        printMistico("Finalizadas: " << str_aux);
     }
 
     return 0;
