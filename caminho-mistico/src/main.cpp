@@ -41,8 +41,6 @@ struct Estatisticas {
     int peso = 0;
     bool iniciada = false;
     bool finalizada = false;
-    int started = -1;
-    int finished = -1;
     int earlyStart = 0;
     int earlyFinish = 0;
     int lateStart = 0;
@@ -540,7 +538,7 @@ void parseExecucao(std::vector<struct Day> &days,
             std::string dia_str = line.substr(0, it);
 
             if (!isInteger(dia_str)) {
-                continue; // caso haja comentarios
+                continue; // caso haja comentários
                 //erroArquivoMistico(file, "linha \'execucao\' invalida");
             }
 
@@ -636,7 +634,7 @@ void parseExecucao(std::vector<struct Day> &days,
 ///     - Late Start (LS)
 ///     - Late Finish (LF)
 ///     - Slack (SL)
-/// @param atividades vetor com as estatisticas das atividades
+/// @param atividades vetor com as estatísticas das atividades
 /// @param caminhos vetor com todos os caminhos
 /// @param header cabeçalho
 void statisticsCalc(std::map<std::string, Estatisticas> &atividades,
@@ -809,21 +807,25 @@ int main(int argc, const char *argv[]) {
         estatistica.insert(std::make_pair(atv.first, e));
     }
 
+    // Calcula as estatísticas de cada atividade
     statisticsCalc(estatistica, caminhos, mapCabecalho, max);
 
+    // Imprime as estatísticas estáticas (!)
     for (const auto atv : estatistica) {
         printMistico("---------");
         printStatistics(std::make_pair(atv.first, atv.second));
     }
 
-    ///// Interação com o usuário
+    // Interação com o usuário
+    // Exibe as estatísticas dinâmicas a cada ENTER pressionado
     printMistico("\nESTATISTICAS\n--------------------------------------------------");
     for (const auto &d : dias) {
         std::cout << "\nPressione ENTER:";
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-        printMistico("Dia: " << d.dia);
+        printMistico("\nDia: " << d.dia);
 
+        // Alertas a serem impressos ao usuário
         std::string msgToPush = "\n";
 
         if (!d.finalizadas.empty()) {
@@ -831,7 +833,6 @@ int main(int argc, const char *argv[]) {
             for (const auto &atv : d.finalizadas) {
                 std::cout << atv << ' ';
                 estatistica[atv].finalizada = true;
-                estatistica[atv].finished = d.dia;
 
                 const auto atrasoEF = d.dia - estatistica[atv].earlyFinish;
                 const auto atrasoLF = d.dia - estatistica[atv].lateFinish;
@@ -866,7 +867,6 @@ int main(int argc, const char *argv[]) {
             for (const auto &atv : d.iniciadas) {
                 std::cout << atv << ' ';
                 estatistica[atv].iniciada = true;
-                estatistica[atv].started = d.dia;
 
                 const auto atrasoES = d.dia - estatistica[atv].earlyStart;
                 const auto atrasoLS = d.dia - estatistica[atv].lateStart;
@@ -894,6 +894,29 @@ int main(int argc, const char *argv[]) {
                 std::cout << atv << ' ';
             }
             printMistico("");
+        }
+
+        for (const auto &atv: estatistica) {
+            // Poderiam/deveriam ter sido iniciadas
+            if (!atv.second.iniciada) {
+                if (atv.second.earlyStart == d.dia) {
+                    msgToPush += "Hoje e o ES da atividade " + atv.first + ".\n";
+                }
+
+                if (atv.second.lateStart == d.dia) {
+                    msgToPush += "Hoje e o LS da atividade " + atv.first + ".\n";
+                }
+            }
+            // Poderiam/deveriam ter sido finalizadas
+            if (!atv.second.finalizada) {
+                if (atv.second.earlyFinish == d.dia) {
+                    msgToPush += "Hoje e o EF da atividade " + atv.first + ".\n";
+                }
+
+                if (atv.second.lateFinish == d.dia) {
+                    msgToPush += "Hoje e o LF da atividade " + atv.first + ".\n";
+                }
+            }
         }
 
         printMistico(msgToPush);
