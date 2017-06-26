@@ -1,17 +1,20 @@
 #
-{{início,-1},{Atividade1,10},{Atividade2,15},{Atividade3,20},{Atividade4,25},{fim,-1}}
+{{INICIO,-1},{ATV1,2},{ATV2,2},{ATV3,4},{ATV4,2},{FIM,-1}}
 #
-{início,Atividade1}
-{Atividade1,Atividade2}
-{Atividade2,Atividade3}
-{Atividade2,fim}
-{Atividade3,fim}
-{Atividade1,Atividade4}
-{Atividade4,fim}
+{INICIO,ATV1}
+{ATV1,ATV2}
+{ATV1,ATV3}
+{ATV2,ATV4}
+{ATV3,ATV4}
+{ATV4,FIM}
 #
-1: {i:Atividade3}
-2: {i:Atividade1,Atividade4}
-3: {f:Atividade1}
-4: {f:Atividade1,Atividade4}
-5: {i:Atividade3,Atividade4;f:Atividade1}
-6: {i:Atividade3,Atividade4;f:Atividade1,Atividade2}
+1: {i:ATV1}
+2: {i:ATV2}
+3: {f:ATV1}
+4: {}
+5: {}
+6: {i:ATV3;f:ATV2}
+7: {}
+8: {}
+9: {}
+10: {}
