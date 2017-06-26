@@ -6,19 +6,15 @@
 /// Gerencia de Projetos - TE064
 /// Prof. Edson Pacheco
 ///
-/// Todo:
-///     - Segunda parte (projeto final)
-///     - Parser com localização das chaves - permitir comentários no arquivo
-///
 
 #include <sys/stat.h>   // S_ISREG, stat
 #include <algorithm>    // find, count
 #include <fstream>      // ifstream
 #include <iostream>     // cout
 #include <map>          // map
-//#include <string>       // strings - implícito
 #include <vector>       // vector
-#include <locale>       // locale
+#include <locale>       // locale (função: isInteger)
+//#include <string>       // (implícito)
 
 // Para modo de compilação
 // Exibe msgs de debug e teste
@@ -45,7 +41,8 @@ struct Estatisticas {
     int peso = 0;
     bool iniciada = false;
     bool finalizada = false;
-    //int atraso = 0;
+    int started = -1;
+    int finished = -1;
     int earlyStart = 0;
     int earlyFinish = 0;
     int lateStart = 0;
@@ -79,6 +76,9 @@ struct Estatisticas {
   f.close();                       \
   erroMistico(msg);
 
+/// Verifica se é um dia válido
+/// (todos os caracteres da string)
+/// @param str string a ser verificada
 bool isInteger(const std::string &str) {
     std::locale loc;
     for (auto digi : str) {
@@ -163,7 +163,6 @@ inline void nextLine(std::ifstream &f, std::string &str) {
 
         // Remove espaços
         auto it = std::find(str.begin(), str.end(), ' ');
-
         while (it != str.end()) {
             str.erase(it);
             it = std::find(str.begin(), str.end(), ' ');
@@ -386,7 +385,7 @@ void parsePares(std::vector<std::vector<std::string>> &pairs,
     removeDuplicados(pairs);
 }
 
-/// Extrai as ligações entre as atividades
+/// Extrai os caminhos
 /// @param caminhos conexões extraídos: cada "linha" do vetor é um caminho
 /// @param pairs conexões entre as atividades
 /// @param atv mapa com as atividades
@@ -527,7 +526,7 @@ void parseExecucao(std::vector<struct Day> &days,
             // Verifica linha válida
             if (!temInicio && !temFinal) {
                 //erroArquivoMistico(file, "linha \'execucao\' invalida");
-                continue; // pode haver linha em braco
+                //continue; // pode haver linha em braco
             }
 
             // Índice do dia
@@ -541,7 +540,8 @@ void parseExecucao(std::vector<struct Day> &days,
             std::string dia_str = line.substr(0, it);
 
             if (!isInteger(dia_str)) {
-                erroArquivoMistico(file, "linha \'execucao\' invalida");
+                continue; // caso haja comentarios
+                //erroArquivoMistico(file, "linha \'execucao\' invalida");
             }
 
             Day thisDay;
@@ -824,53 +824,80 @@ int main(int argc, const char *argv[]) {
 
         printMistico("Dia: " << d.dia);
 
-        if(!d.iniciadas.empty()){
-            std::cout << "Atividade(s) iniciada(s): ";
-            for (const auto &atv : d.iniciadas){
-                std::cout << atv << ' ';
-            }
-            printMistico("");
-        }
+        std::string msgToPush = "\n";
 
-        if(!d.finalizadas.empty()){
+        if (!d.finalizadas.empty()) {
             std::cout << "Atividade(s) finalizada(s): ";
-            for (const auto &atv : d.finalizadas){
+            for (const auto &atv : d.finalizadas) {
+                std::cout << atv << ' ';
+                estatistica[atv].finalizada = true;
+                estatistica[atv].finished = d.dia;
+
+                const auto atrasoEF = d.dia - estatistica[atv].earlyFinish;
+                const auto atrasoLF = d.dia - estatistica[atv].lateFinish;
+
+                msgToPush += "A atividade \"" + atv + "\" foi finalizada ";
+
+                if (atrasoEF == 0) {
+                    msgToPush += "no seu EF.\n";
+                } else if (atrasoLF == 0) {
+                    msgToPush += "no seu LF.\n";
+                } else if (atrasoEF < 0) {
+                    msgToPush += std::to_string(-atrasoEF) + " dia(s) antes do seu EF.\n";
+                } else if (atrasoLF < 0) {
+                    msgToPush += std::to_string(atrasoEF) + " dia(s) antes do seu LF.\n";
+                } else {
+                    msgToPush += std::to_string(atrasoLF) + " dia(s) depois do seu LF.\n";
+                }
+            }
+            printMistico("");
+        }
+
+        // Em execução: antes das que foram iniciadas no dia
+        std::vector<std::string> emExecucao;
+        for (const auto &atv : estatistica) {
+            if (atv.second.iniciada && !atv.second.finalizada) {
+                emExecucao.push_back(atv.first);
+            }
+        }
+
+        if (!d.iniciadas.empty()) {
+            std::cout << "Atividade(s) iniciada(s): ";
+            for (const auto &atv : d.iniciadas) {
+                std::cout << atv << ' ';
+                estatistica[atv].iniciada = true;
+                estatistica[atv].started = d.dia;
+
+                const auto atrasoES = d.dia - estatistica[atv].earlyStart;
+                const auto atrasoLS = d.dia - estatistica[atv].lateStart;
+
+                msgToPush += "A atividade \"" + atv + "\" foi iniciada ";
+
+                if (atrasoES == 0) {
+                    msgToPush += "no seu ES.\n";
+                } else if (atrasoLS == 0) {
+                    msgToPush += "no seu LS.\n";
+                } else if (atrasoES < 0) {
+                    msgToPush += std::to_string(-atrasoES) + " dia(s) antes do seu ES.\n";
+                } else if (atrasoLS < 0) {
+                    msgToPush += std::to_string(atrasoES) + " dia(s) antes do seu LS.\n";
+                } else {
+                    msgToPush += std::to_string(atrasoLS) + " dia(s) depois do seu LS.\n";
+                }
+            }
+            printMistico("");
+        }
+
+        if (!emExecucao.empty()) {
+            std::cout << "Atividade(s) ainda em execucao: ";
+            for (const auto &atv : emExecucao) {
                 std::cout << atv << ' ';
             }
             printMistico("");
         }
 
+        printMistico(msgToPush);
 
-    //    std::string str_aux = "";
-    //    for (const auto &i : d.iniciadas) {
-    //        str_aux += i + " ";
-    //        for (auto &atv : estatisticasAtividades) {
-    //            if (i == atv.nome) {
-    //                atv.iniciada = true;
-    //            }
-    //        }
-    //    }
-    //    printMistico("Iniciadas: " << str_aux);
-    //
-    //    str_aux.clear();
-    //    for (const auto &f : d.finalizadas) {
-    //        str_aux += f + " ";
-    //        for (auto &atv : estatisticasAtividades) {
-    //            if (f == atv.nome) {
-    //                atv.finalizada = true;
-    //            }
-    //        }
-    //    }
-    //    printMistico("Finalizadas: " << str_aux);
-    //
-    //    printMistico("");
-    //
-    //    statisticsCalc(estatisticasAtividades, d, caminhos);
-    //
-    //    for (const auto &atv : estatisticasAtividades) {
-    //        printMistico("---------");
-    //        printStatistics(atv);
-    //    }
         printMistico("\n---------------");
     }
 
